@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { authApi } from "@/lib/api/auth";
 
 const schema = z
@@ -64,6 +65,7 @@ export function ResetPasswordPage() {
   };
 
   return (
+    <AuthShell>
     <Card>
       <CardHeader>
         <CardTitle>Новый пароль</CardTitle>
@@ -111,5 +113,6 @@ export function ResetPasswordPage() {
         </Form>
       </CardContent>
     </Card>
+    </AuthShell>
   );
 }

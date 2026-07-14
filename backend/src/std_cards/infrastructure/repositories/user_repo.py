@@ -163,6 +163,14 @@ class UserRepository(BaseRepository):
             conn,
         )
 
+    async def delete(self, user_id: UUID, conn: AsyncConnection | None = None) -> None:
+        """Физическое удаление. FK на users стоят CASCADE (сессии, группы доступа)
+
+        либо SET NULL (карточки, шаблоны, аудит) — данные и история сохраняются,
+        в аудите остаётся actor_email.
+        """
+        await self.ctx_wrap(sa.delete(users).where(users.c.id == user_id), conn)
+
     async def update_fields(
         self, user_id: UUID, fields: dict, conn: AsyncConnection | None = None
     ) -> UserDB | None:

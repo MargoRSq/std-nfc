@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore, setRememberMe } from "@/stores/authStore";
 
@@ -31,14 +32,6 @@ const recoverySchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type TotpFormData = z.infer<typeof totpSchema>;
 type RecoveryFormData = z.infer<typeof recoverySchema>;
-
-function AuthShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen flex items-start justify-center pt-[200px] px-6 pb-8">
-      <div className="max-w-[394px] w-full">{children}</div>
-    </div>
-  );
-}
 
 export function LoginPage() {
   const navigate = useNavigate();

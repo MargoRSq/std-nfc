@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { authApi } from "@/lib/api/auth";
 
 const schema = z.object({
@@ -41,6 +42,7 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
+      <AuthShell>
       <Card>
         <CardHeader>
           <CardTitle>Письмо отправлено</CardTitle>
@@ -56,10 +58,12 @@ export function ForgotPasswordPage() {
           </Link>
         </CardContent>
       </Card>
+      </AuthShell>
     );
   }
 
   return (
+    <AuthShell>
     <Card>
       <CardHeader>
         <CardTitle>Сброс пароля</CardTitle>
@@ -92,5 +96,6 @@ export function ForgotPasswordPage() {
         </Form>
       </CardContent>
     </Card>
+    </AuthShell>
   );
 }

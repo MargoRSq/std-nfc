@@ -155,17 +155,18 @@ class AdminService:
                     message="Нельзя удалить последнего супер-админа",
                 )
 
-        await self.users.set_active(admin_id, is_active=False)
-        await self.users.bump_token_version(admin_id)
-        await self.refresh.revoke_all_for_user(admin_id)
-
+        # Аудит до удаления: после DELETE запись о пользователе исчезнет,
+        # а в журнале должен остаться след, кто и кого удалил.
         await self.audit.write(
             actor_id=actor.id,
             actor_email=actor.email,
             action=AuditAction.ADMIN_DELETE,
             entity_type="user",
             entity_id=str(admin_id),
+            diff={"email": user.email, "role": user.role},
         )
+        await self.refresh.revoke_all_for_user(admin_id)
+        await self.users.delete(admin_id)
 
     async def reset_password(self, admin_id: UUID, actor: UserDB) -> str:
         user = await self.users.get_by_id(admin_id)

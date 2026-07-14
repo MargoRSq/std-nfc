@@ -651,7 +651,12 @@ export function AdminsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Удалить администратора?</AlertDialogTitle>
-            <AlertDialogDescription>Это действие нельзя отменить.</AlertDialogDescription>
+            <AlertDialogDescription>
+              Учётная запись будет удалена безвозвратно, вместе с её доступами и сессиями.
+              Созданные ею карточки и записи в журнале действий сохранятся.
+              Чтобы просто закрыть доступ с возможностью вернуть — используйте
+              «Заблокировать».
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>

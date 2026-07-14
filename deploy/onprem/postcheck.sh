@@ -84,9 +84,26 @@ fi
 echo "== 5. Кроны и бэкап =="
 [ -f /etc/cron.d/std-cards ] && ok "кроны установлены (/etc/cron.d/std-cards)" \
     || fail "кроны не установлены — перезапусти install.sh"
+BACKUP_DIR=$(grep '^BACKUP_DIR=' .env | cut -d= -f2)
+BACKUP_DIR=${BACKUP_DIR:-./backups}
 if docker compose run --rm backup >/dev/null 2>&1; then
-    LAST=$(ls -t backups/std_cards_*.sql.gz 2>/dev/null | head -1)
-    [ -n "$LAST" ] && ok "бэкап работает: $LAST ($(du -h "$LAST" | cut -f1))" || fail "бэкап отработал, но файла нет в ./backups"
+    LAST=$(ls -t "$BACKUP_DIR"/std_cards_*.sql.gz 2>/dev/null | head -1)
+    if [ -n "$LAST" ] && gzip -t "$LAST" 2>/dev/null; then
+        ok "бэкап работает: $LAST ($(du -h "$LAST" | cut -f1), архив целый)"
+    elif [ -n "$LAST" ]; then
+        fail "бэкап создан, но архив битый: $LAST"
+    else
+        fail "бэкап отработал, но файла нет в $BACKUP_DIR"
+    fi
+    case "$BACKUP_DIR" in
+        /*)
+            DISK=$(findmnt -no SOURCE --target "$BACKUP_DIR" 2>/dev/null)
+            ROOT_DISK=$(findmnt -no SOURCE / 2>/dev/null)
+            [ "$DISK" != "$ROOT_DISK" ] && ok "бэкапы на отдельном диске ($DISK, $(df -h "$BACKUP_DIR" | tail -1 | awk '{print $4}') свободно)" \
+                || warn "BACKUP_DIR на системном диске — при отказе SSD потеряются вместе с БД"
+            ;;
+        *) warn "бэкапы на системном диске ($BACKUP_DIR) — рассмотрите ./setup-backup-disk.sh" ;;
+    esac
 else
     fail "бэкап не отработал: docker compose run --rm backup"
 fi

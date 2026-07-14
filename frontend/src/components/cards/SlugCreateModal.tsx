@@ -13,7 +13,8 @@ interface Props {
   submitting?: boolean;
 }
 
-const SLUG_PATTERN = /^[A-Za-z0-9_-]+$/;
+// Точка разрешена внутри, но не первым/последним символом и не подряд («..»).
+const SLUG_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9_.-]*[A-Za-z0-9_-]$/;
 const URL_PREFIX = `${window.location.origin}/c/`;
 const SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -75,10 +76,10 @@ export function SlugCreateModal({ open, onClose, onConfirm, submitting }: Props)
   }, [debounced, open]);
 
   const formatError =
-    value.length > 0 && !SLUG_PATTERN.test(value)
-      ? "В названии можно использовать только латинские символы, цифры, _ и -"
-      : value.length > 0 && (value.length < 3 || value.length > 32)
-        ? "URL должен быть от 3 до 32 символов"
+    value.length > 0 && (value.length < 6 || value.length > 32)
+      ? "URL должен быть от 6 до 32 символов"
+      : value.length > 0 && (!SLUG_PATTERN.test(value) || value.includes(".."))
+        ? "Латинские буквы, цифры, _ - и точка. Точка — только внутри, не подряд"
         : null;
   const takenError = available === false && !formatError ? "Данный URL занят, придумайте другой" : null;
   const canSubmit = !!value && available === true && !formatError && !submitting;

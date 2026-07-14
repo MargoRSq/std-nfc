@@ -334,7 +334,11 @@ cards = StdCardsTable(
     sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
     sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     sa.Column("last_opened_at", sa.DateTime(timezone=True), nullable=True),
-    sa.CheckConstraint("public_slug ~ '^[A-Za-z0-9_-]{6,32}$'", name="ck_cards_public_slug_format"),
+    sa.CheckConstraint(
+        "public_slug ~ '^[A-Za-z0-9_-][A-Za-z0-9_.-]{4,30}[A-Za-z0-9_-]$' "
+        "AND public_slug !~ '\\.\\.'",
+        name="ck_cards_public_slug_format",
+    ),
     sa.CheckConstraint("photo_shape IN ('square', 'circle')", name="ck_cards_photo_shape"),
     sa.CheckConstraint(
         "logo_shape IN ('square', 'circle', 'rectangle')", name="ck_cards_logo_shape"

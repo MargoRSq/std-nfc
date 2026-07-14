@@ -8,6 +8,7 @@ from openpyxl.workbook import Workbook
 
 from std_cards.config import settings
 from std_cards.core.exceptions import ValidationFailedError
+from std_cards.core.image_fetch import fetch_image
 from std_cards.core.nats.publisher import NatsPublisher
 from std_cards.core.slug import gen_slug
 from std_cards.infrastructure.minio import MinioClient
@@ -17,6 +18,7 @@ from std_cards.infrastructure.repositories.template_repo import TemplateReposito
 from std_cards.models.card import BackgroundGradient, CardCreate
 from std_cards.models.import_job import ImportJobDB, ImportStatus
 from std_cards.models.template import TemplateDB
+from std_cards.services.media_service import MediaService
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ EXPECTED_HEADERS = [
     "card_issue_date",
     "join_date",
     "chairman",
+    "photo_url",
 ]
 REQUIRED_HEADERS = EXPECTED_HEADERS[:4]
 
@@ -43,6 +46,7 @@ RU_HEADERS = [
     "Дата выдачи билета",
     "Дата вступления",
     "Председатель",
+    "Ссылка на фото",
 ]
 
 HEADER_ALIASES: dict[str, set[str]] = {
@@ -66,6 +70,16 @@ HEADER_ALIASES: dict[str, set[str]] = {
     },
     "join_date": {"join_date", "дата вступления", "член стд с"},
     "chairman": {"chairman", "председатель"},
+    "photo_url": {
+        "photo_url",
+        "ссылка на фото",
+        "фото",
+        "фотография",
+        "аватар",
+        "аватарка",
+        "photo",
+        "avatar",
+    },
 }
 
 
@@ -73,6 +87,14 @@ def _norm(value) -> str:
     if value is None:
         return ""
     return str(value).strip().lower()
+
+
+def _photo_url_from_row(row: tuple, col_index: dict[str, int] | None) -> str | None:
+    idx = col_index.get("photo_url") if col_index else EXPECTED_HEADERS.index("photo_url")
+    if idx is None or idx >= len(row):
+        return None
+    value = row[idx]
+    return str(value).strip() or None if value else None
 
 
 def _resolve_columns(header_row: tuple) -> dict[str, int]:
@@ -183,6 +205,7 @@ class ImportService:
             logger.warning("Job %s not pending, skipping", job_id)
             return
         await self.imports.mark_started(job_id)
+        media = MediaService(self.minio, self.cards)
         try:
             template = None
             if job.template_id is not None:
@@ -227,10 +250,22 @@ class ImportService:
                             row, template=template, col_index=col_index
                         )
                         slug = gen_slug(7)
-                        await self.cards.create(card_data, slug=slug, created_by=job.created_by)
+                        card = await self.cards.create(
+                            card_data, slug=slug, created_by=job.created_by
+                        )
                         inserted += 1
                     except Exception as exc:
                         errors.append({"row": row_idx, "error": str(exc)[:200]})
+                        continue
+                    photo_url = _photo_url_from_row(row, col_index)
+                    if photo_url:
+                        try:
+                            raw, content_type = await fetch_image(photo_url)
+                            await media.upload_card_photo(card.id, raw, content_type)
+                        except Exception as exc:
+                            errors.append(
+                                {"row": row_idx, "error": f"Фото не загружено: {exc}"[:200]}
+                            )
                 await self.imports.update_progress(
                     job_id,
                     processed_rows=min(i + batch_size, total),

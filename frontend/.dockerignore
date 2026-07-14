@@ -1,0 +1,6 @@
+node_modules/
+dist/
+e2e/
+.figma-extract/
+playwright-report/
+test-results/

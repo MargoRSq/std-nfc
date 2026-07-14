@@ -1,0 +1,665 @@
+{% import '_msg_macros.html' as msg %}
+{% if card.bg_kind == 'gradient' and card.bg_gradient %}
+  {% set g = card.bg_gradient %}
+  {% set bg_start = g.get('start', g.get('from', '#1F1E5E')) %}
+  {% set bg_end = g.get('end', g.get('to', '#798BFF')) %}
+  {% set card_bg = 'linear-gradient(180deg, ' ~ bg_start ~ ' 0%, ' ~ bg_end ~ ' 100%)' %}
+  {% set bg_solid = bg_start %}
+{% else %}
+  {% set card_bg = card.bg_color or '#1F1E5E' %}
+  {% set bg_solid = card.bg_color or '#1F1E5E' %}
+{% endif %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  {% set fullname = (card.last_name ~ ' ' ~ card.first_name ~ (' ' ~ card.middle_name if card.middle_name else '')) | trim %}
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="{{ fullname }} — СТД">
+  <meta property="og:description" content="Членский билет №{{ card.membership_no }}, член союза театральных деятелей">
+  <meta property="og:url" content="{{ base_url }}/c/{{ slug }}">
+  <meta property="og:image" content="{{ base_url }}/c/{{ slug }}/og.png?v={{ updated_unix }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ fullname }} — СТД">
+  <meta name="twitter:description" content="Членский билет №{{ card.membership_no }}">
+  <meta name="twitter:image" content="{{ base_url }}/c/{{ slug }}/og.png?v={{ updated_unix }}">
+  <title>{{ t.page_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Red+Hat+Display:wght@800&display=swap" rel="stylesheet">
+  <style>:root {
+    --card-bg-solid: {{ bg_solid }};
+    --card-text: {{ palette.text }};
+    --card-text-muted: {{ palette.text_muted }};
+    --card-placeholder-bg: {{ palette.placeholder_bg }};
+    --card-placeholder-stroke: {{ palette.placeholder_stroke }};
+  }</style>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: #F5F5F5; }
+
+    body {
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: #F5F5F5;
+      padding: 24px 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      font-feature-settings: 'liga' 1, 'calt' 1;
+      font-synthesis: none;
+    }
+
+    .page-frame {
+      width: 100%;
+      max-width: 380px;
+      background: {{ card_bg }};
+      border-radius: 24px;
+      padding: 27px 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      box-shadow: 0 16px 48px -8px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (max-width: 480px) {
+      html, body { background: var(--card-bg-solid, #1F1E5E); }
+      body { padding: 0; align-items: stretch; }
+      .page-frame {
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+      }
+    }
+
+    .card {
+      width: 100%;
+      max-width: 343px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .logo-strip {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 71px;
+    }
+
+    .logo-strip .std-brand-logo {
+      max-height: 71px;
+      max-width: 100%;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .logo-shape {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+      overflow: hidden;
+      padding: 6px;
+    }
+
+    .logo-shape-square { width: 56px; height: 56px; border-radius: 8px; }
+    .logo-shape-circle { width: 56px; height: 56px; border-radius: 50%; }
+    .logo-shape-rectangle { width: auto; max-width: 168px; min-width: 56px; height: 56px; border-radius: 8px; }
+
+    .logo-shape img {
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .hero-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .membership-no {
+      color: var(--card-text, #FFFFFF);
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+
+    .avatar {
+      width: 200px;
+      height: 200px;
+      flex-shrink: 0;
+      overflow: hidden;
+      background: var(--card-placeholder-bg, rgba(255,255,255,0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 40px;
+    }
+
+    .avatar.avatar-circle { border-radius: 50%; }
+
+    .avatar .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-initials-text {
+      font-family: 'Manrope', -apple-system, sans-serif;
+      font-weight: 500;
+      font-size: 96px;
+      line-height: 1;
+      letter-spacing: 0.0235em;
+      color: var(--card-text, #FFFFFF);
+    }
+
+    .name-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      align-self: stretch;
+    }
+
+    .card-name {
+      color: var(--card-text, #FFFFFF);
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .card-subtitle {
+      color: var(--card-text, #FFFFFF);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .pill {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-decoration: none;
+    }
+
+    .pill-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #727272;
+      line-height: 1.3;
+    }
+
+    .pill-value {
+      font-size: 18px;
+      font-weight: 500;
+      color: #1F1E5E;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .pill-link {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      color: inherit;
+    }
+
+    .pill-link .pill-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .pill-link .pill-value {
+      word-break: break-all;
+    }
+
+    .msg-ico-wrap {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #F2F2F7;
+      color: #1F1E5E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .msg-ico { width: 20px; height: 20px; }
+
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 16px 24px;
+      background: #F5F5F5;
+      color: #1F1E5E;
+      border: 0;
+      border-radius: 300px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 48px;
+    }
+
+    .contact-btn:hover { filter: brightness(0.96); }
+
+    .deleted-notice {
+      color: var(--card-text, #FFFFFF);
+      font-size: 22px;
+      font-weight: 700;
+      padding: 64px 24px;
+      text-align: center;
+    }
+
+    .modal-toggle { display: none; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-toggle:checked ~ .modal-overlay { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 28px;
+      max-width: 360px;
+      width: 100%;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #020617;
+      padding-right: 48px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      color: #727272;
+    }
+
+    .modal-close:hover { background: #F5F5F5; }
+
+    .card-message {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      color: var(--card-text);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-message-image {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .card-message-text {
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0;
+      white-space: pre-line;
+      word-wrap: break-word;
+    }
+
+    .close-back {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top));
+      left: max(16px, env(safe-area-inset-left));
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 16px -4px rgba(0,0,0,0.18);
+      z-index: 10;
+      text-decoration: none;
+      color: #020617;
+    }
+    .close-back svg { width: 20px; height: 20px; }
+
+    @media (max-width: 380px) {
+      .card-name { font-size: 22px; }
+      .avatar-initials-text { font-size: 80px; }
+    }
+  </style>
+</head>
+<body>
+  <input type="checkbox" id="contact-toggle" class="modal-toggle">
+
+  {% if show_close %}
+    <a href="javascript:history.back()" class="close-back" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </a>
+  {% endif %}
+
+  <div class="page-frame">
+
+  <div class="card">
+    {% if not card.is_active %}
+      <div class="deleted-notice">{{ t.card_invalid }}</div>
+    {% else %}
+      <div class="hero">
+        <div class="logo-strip">
+          {% set logo_shape_cls = 'logo-shape-' ~ (card.logo_shape or 'square') %}
+          {% if card.logo_key and card.logo_key.startswith('preset:') %}
+            <div class="logo-shape {{ logo_shape_cls }}">
+              <img src="/logos/{{ card.logo_key[7:] }}.png" alt="{{ t.logo_alt }}">
+            </div>
+          {% elif card.logo_key %}
+            <div class="logo-shape {{ logo_shape_cls }}">
+              <img src="/api/media/{{ card.logo_key }}" alt="{{ t.logo_alt }}">
+            </div>
+          {% else %}
+            <img src="/std-logo-full.png" alt="{{ t.logo_alt }}" class="std-brand-logo">
+          {% endif %}
+        </div>
+
+        <div class="hero-info">
+          <div class="membership-no">{{ t.membership_card }} №{{ card.membership_no }}</div>
+
+          <div class="avatar {{ 'avatar-circle' if card.photo_shape == 'circle' else '' }}">
+            {% if card.photo_key %}
+              <img class="avatar-img" src="/api/media/{{ card.photo_key }}" alt="Фото">
+            {% else %}
+              {% set _avatar_bg = '' %}
+              {% if card.avatar_gradient %}
+                {% set _avatar_bg = 'background: linear-gradient(' ~ (card.avatar_gradient.angle | default(135)) ~ 'deg, ' ~ card.avatar_gradient['from'] ~ ', ' ~ card.avatar_gradient['to'] ~ ');' %}
+              {% elif card.avatar_color %}
+                {% set _avatar_bg = 'background: ' ~ card.avatar_color ~ ';' %}
+              {% endif %}
+              <div class="avatar-placeholder avatar-initials" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;{{ _avatar_bg }}">
+                <span class="avatar-initials-text">{{ (card.last_name[:1] | upper) ~ (card.first_name[:1] | upper) }}</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="name-stack">
+            <div class="card-name">{{ card.last_name }} {{ card.first_name }}{% if card.middle_name %} {{ card.middle_name }}{% endif %}</div>
+            <div class="card-subtitle">{{ t.membership_subtitle }}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if message %}
+        <div class="card-message" role="note" aria-label="Сообщение от администратора">
+          {% if message.image_key %}
+            <img src="/api/media/{{ message.image_key }}" alt="" class="card-message-image">
+          {% endif %}
+          {% if message.text %}
+            <p class="card-message-text">{{ message.text }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="fields">
+        {% set preset_keys = ['birth_date', 'region', 'card_issue_date', 'join_date', 'chairman'] %}
+        {% set raw_order = card.field_order if card.field_order else preset_keys %}
+        {% set filtered_order = raw_order | select('in', preset_keys) | list %}
+        {% set missing = preset_keys | reject('in', filtered_order) | list %}
+        {% set ordered = filtered_order + missing %}
+        {% for key in ordered %}
+          {% if key == 'birth_date' and card.birth_date and not card.hide_birth_date %}
+            <div class="pill">
+              <span class="pill-label">{{ t.label_birth_date }}:</span>
+              <span class="pill-value">{{ card.birth_date | formatdate_ru }}</span>
+            </div>
+          {% elif key == 'region' and card.region and not card.hide_region %}
+            <div class="pill">
+              <span class="pill-label">{{ t.label_region }}:</span>
+              <span class="pill-value">{{ card.region }}</span>
+            </div>
+          {% elif key == 'card_issue_date' and card.card_issue_date and not card.hide_card_issue_date %}
+            <div class="pill">
+              <span class="pill-label">{{ t.label_card_issue_date }}:</span>
+              <span class="pill-value">{{ card.card_issue_date | formatdate_ru }}</span>
+            </div>
+          {% elif key == 'join_date' and card.join_date and not card.hide_join_date %}
+            <div class="pill">
+              <span class="pill-label">{{ t.label_join_date }}:</span>
+              <span class="pill-value">с {{ card.join_date.year }}</span>
+            </div>
+          {% elif key == 'chairman' and card.chairman and not card.hide_chairman %}
+            <div class="pill">
+              <span class="pill-label">{{ t.label_chairman }}:</span>
+              <span class="pill-value">{{ card.chairman }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+        {% if card.label_set %}
+          {% for field in card.label_set %}
+            {% if field.value and not field.is_hidden %}
+              <div class="pill">
+                <span class="pill-label">{{ field.label }}:</span>
+                <span class="pill-value">{{ field.value }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% set visible_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | list %}
+        {% for ib in visible_contacts %}
+          {% if ib.value %}
+            {% if ib.type in msg.MESSENGER_TYPES %}
+              <a class="pill pill-link" href="{{ msg.href(ib.type, ib.value) }}" target="_blank" rel="noopener noreferrer">
+                <span class="msg-ico-wrap">{{ msg.icon(ib.type) }}</span>
+                <span class="pill-content">
+                  <span class="pill-label">{{ msg.label(ib.type) }}:</span>
+                  <span class="pill-value">{{ msg.short(ib.value) }}</span>
+                </span>
+              </a>
+            {% elif ib.type == 'phone' %}
+              <a class="pill pill-link" href="tel:{{ ib.value | replace(' ', '') }}">
+                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                <span class="pill-content">
+                  <span class="pill-label">{{ t.label_phone }}:</span>
+                  <span class="pill-value">{{ ib.value }}</span>
+                </span>
+              </a>
+            {% elif ib.type == 'email' %}
+              <a class="pill pill-link" href="mailto:{{ ib.value }}">
+                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                <span class="pill-content">
+                  <span class="pill-label">{{ t.label_email }}:</span>
+                  <span class="pill-value">{{ ib.value }}</span>
+                </span>
+              </a>
+            {% elif ib.type == 'website' %}
+              <a class="pill pill-link" href="{{ ib.value if ib.value.startswith('http') else 'https://' + ib.value }}" target="_blank" rel="noopener noreferrer">
+                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+                <span class="pill-content">
+                  <span class="pill-label">{{ t.label_website }}:</span>
+                  <span class="pill-value">{{ ib.value }}</span>
+                </span>
+              </a>
+            {% else %}
+              <div class="pill">
+                <span class="pill-label">
+                  {% if ib.type == 'notes' %}{{ t.label_notes or 'Заметки' }}{% else %}{{ ib.type }}{% endif %}:
+                </span>
+                <span class="pill-value">{{ ib.value }}</span>
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% if card.feedback_form_enabled %}
+          <label for="contact-toggle" class="contact-btn">{{ t.contact_btn }}</label>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  </div>
+
+  {% if card.feedback_form_enabled %}
+    {% set public_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | list %}
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-title">{{ t.contact_title }}</div>
+        {% if public_contacts %}
+          {% for c in public_contacts %}
+            {% set ct = c.type %}
+            {% if ct == 'email' %}
+              <a href="mailto:{{ c.value }}" class="pill" style="text-decoration:none">
+                <span class="pill-label">{{ t.label_email }}</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'phone' or ct == 'whatsapp' %}
+              <a href="tel:{{ c.value }}" class="pill" style="text-decoration:none">
+                <span class="pill-label">{{ t.label_whatsapp if ct == 'whatsapp' else t.label_phone }}</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'telegram' %}
+              <a href="https://t.me/{{ c.value | replace('@', '') }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">{{ t.label_telegram }}</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'instagram' %}
+              <a href="https://instagram.com/{{ c.value | replace('@', '') }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">Instagram</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'facebook' %}
+              <a href="{{ c.value if 'http' in c.value else 'https://facebook.com/' ~ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">Facebook</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'twitter' %}
+              <a href="https://x.com/{{ c.value | replace('@', '') }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">Twitter / X</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'youtube' %}
+              <a href="{{ c.value if 'http' in c.value else 'https://youtube.com/' ~ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">YouTube</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'tiktok' %}
+              <a href="https://tiktok.com/@{{ c.value | replace('@', '') }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">TikTok</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'vk' %}
+              <a href="https://vk.com/{{ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">ВКонтакте</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'ok' %}
+              <a href="https://ok.ru/{{ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">Одноклассники</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'linkedin' %}
+              <a href="{{ c.value if 'http' in c.value else 'https://' ~ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">LinkedIn</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% elif ct == 'website' %}
+              <a href="{{ c.value if 'http' in c.value else 'https://' ~ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+                <span class="pill-label">{{ t.label_website }}</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </a>
+            {% else %}
+              <div class="pill">
+                <span class="pill-label">{{ ct | capitalize }}</span>
+                <span class="pill-value">{{ c.value }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <a href="mailto:stdrf@stdrf.ru" class="pill" style="text-decoration:none">
+            <span class="pill-label">{{ t.label_email }}</span>
+            <span class="pill-value">stdrf@stdrf.ru</span>
+          </a>
+          <a href="tel:+74956502846" class="pill" style="text-decoration:none">
+            <span class="pill-label">{{ t.label_phone }}</span>
+            <span class="pill-value">+7(495)650-28-46</span>
+          </a>
+          <a href="https://stdrf.ru" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
+            <span class="pill-label">{{ t.label_website }}</span>
+            <span class="pill-value">stdrf.ru</span>
+          </a>
+        {% endif %}
+        <label for="contact-toggle" class="modal-close" aria-label="{{ t.contact_close }}">×</label>
+      </div>
+    </div>
+  {% endif %}
+
+</body>
+</html>

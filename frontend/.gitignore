@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+.vite/
+playwright-report/
+test-results/
+coverage/
+.tsbuildinfo
+
+# Figma inspect outputs (regenerated per session, except schema)
+.figma-extract/*
+!.figma-extract/nodes.json

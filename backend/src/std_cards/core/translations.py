@@ -1,0 +1,37 @@
+TRANSLATIONS: dict[str, str] = {
+    "page_title": "Удостоверение СТД РФ",
+    "card_invalid": "Удостоверение недействительно",
+    "card_not_found": "Удостоверение не найдено",
+    "membership_card": "Членский билет",
+    "membership_subtitle": "Член союза театральных деятелей",
+    "logo_alt": "СТД РФ — Союз театральных деятелей Российской Федерации",
+    "label_birth_date": "Дата рождения",
+    "label_region": "Регион",
+    "label_card_issue_date": "Дата выдачи билета",
+    "label_join_date": "Член СТД",
+    "label_chairman": "Председатель союза театральных деятелей Российской Федерации",
+    "label_email": "Email",
+    "label_phone": "Телефон",
+    "label_whatsapp": "WhatsApp",
+    "label_telegram": "Telegram",
+    "label_website": "Сайт",
+    "contact_btn": "Связаться с СТД",
+    "contact_title": "Связаться с нами",
+    "contact_close": "Закрыть",
+    "contact_form_header": "Связаться",
+    "contact_form_name_label": "Имя",
+    "contact_form_name_placeholder": "Ваше имя",
+    "contact_form_contact_label": "Email или телефон",
+    "contact_form_contact_placeholder": "email@example.com или +7...",
+    "contact_form_message_label": "Сообщение",
+    "contact_form_message_placeholder": "Ваше сообщение...",
+    "contact_form_submit": "Отправить",
+    "contact_form_submitted": "Сообщение отправлено. Спасибо!",
+    "contact_form_failed": "Не удалось отправить. Попробуйте позже.",
+    "rate_limited": "Слишком много запросов. Попробуйте позже.",
+    "feedback_unavailable": "Форма обратной связи недоступна",
+}
+
+
+def get_translations() -> dict[str, str]:
+    return TRANSLATIONS

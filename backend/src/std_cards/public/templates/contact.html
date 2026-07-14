@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <title>{{ t.contact_form_header }} — {{ card.last_name }} {{ card.first_name }}</title>
+  <style>
+    :root {
+      --primary: #1F1E5E;
+      --primary-hover: #2A2974;
+      --secondary: #798BFF;
+      --accent: #BE38F3;
+      --surface: #FFFFFF;
+      --surface-2: #F5F5F5;
+      --border: #E5E7EB;
+      --text: #020617;
+      --muted: #727272;
+      --error: #dc2626;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f6;
+      padding: 24px 16px;
+    }
+    main {
+      width: 100%;
+      max-width: 480px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(31,30,94,0.18);
+      background: var(--surface);
+    }
+    .header {
+      padding: 28px 32px 24px;
+      background: {{ card.bg_color or '#1F1E5E' }};
+      text-align: center;
+    }
+    .header-title {
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .header-sub {
+      color: rgba(255,255,255,0.75);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+    .form-body {
+      padding: 28px 32px 32px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      background: var(--surface);
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { background: var(--primary-hover); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--text); }
+    .success {
+      display: none;
+      text-align: center;
+      padding: 32px 24px;
+    }
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .success-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .success-text {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .error-msg {
+      display: none;
+      padding: 10px 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+    }
+    footer {
+      border-top: 1px solid #eee;
+      padding: 12px 32px;
+      text-align: center;
+    }
+    footer small {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+    @media (max-width: 360px) {
+      .header { padding: 22px 20px 18px; }
+      .form-body { padding: 20px 20px 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="header">
+      <div class="header-title">{{ t.contact_form_header }}</div>
+      <div class="header-sub">{{ card.last_name }} {{ card.first_name }}{% if card.middle_name %} {{ card.middle_name }}{% endif %}</div>
+    </div>
+
+    <div class="form-body" id="form-wrap">
+      <div class="error-msg" id="error-msg"></div>
+      <form id="contact-form">
+        <div class="field">
+          <label for="name">{{ t.contact_form_name_label }}</label>
+          <input type="text" id="name" name="name" placeholder="{{ t.contact_form_name_placeholder }}" required maxlength="200">
+        </div>
+        <div class="field">
+          <label for="contact">{{ t.contact_form_contact_label }}</label>
+          <input type="text" id="contact" name="contact" placeholder="{{ t.contact_form_contact_placeholder }}" required maxlength="200">
+        </div>
+        <div class="field">
+          <label for="message">{{ t.contact_form_message_label }}</label>
+          <textarea id="message" name="message" placeholder="{{ t.contact_form_message_placeholder }}" required maxlength="2000"></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submit-btn">{{ t.contact_form_submit }}</button>
+      </form>
+      <a href="/c/{{ slug }}" class="back-link">← Назад к карточке</a>
+    </div>
+
+    <div class="success" id="success-wrap">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="success-title">Спасибо!</div>
+      <div class="success-text">{{ t.contact_form_submitted }}</div>
+    </div>
+
+    <footer>
+      <small>© Союз театральных деятелей РФ</small>
+    </footer>
+  </main>
+
+  <script>
+    const form = document.getElementById('contact-form');
+    const btn = document.getElementById('submit-btn');
+    const errMsg = document.getElementById('error-msg');
+    const formWrap = document.getElementById('form-wrap');
+    const successWrap = document.getElementById('success-wrap');
+
+    const T = {
+      sending: 'Отправка...',
+      submit: {{ t.contact_form_submit | tojson }},
+      rateLimited: {{ t.rate_limited | tojson }},
+      sendFailed: {{ t.contact_form_failed | tojson }},
+      offline: 'Нет соединения. Проверьте интернет.',
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = T.sending;
+      errMsg.style.display = 'none';
+
+      const payload = {
+        name: form.name.value.trim(),
+        contact: form.contact.value.trim(),
+        message: form.message.value.trim(),
+      };
+
+      try {
+        const res = await fetch('/api/public/cards/{{ slug }}/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok || res.status === 204) {
+          formWrap.style.display = 'none';
+          successWrap.style.display = 'block';
+        } else {
+          errMsg.textContent = res.status === 429 ? T.rateLimited : T.sendFailed;
+          errMsg.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = T.submit;
+        }
+      } catch {
+        errMsg.textContent = T.offline;
+        errMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = T.submit;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    container: {
+      center: true,
+      padding: "1rem",
+      screens: { "2xl": "1400px" },
+    },
+    extend: {
+      fontFamily: {
+        sans: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['"Red Hat Display"', 'Manrope', 'sans-serif'],
+      },
+      colors: {
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
+        std: {
+          primary: "#1F1E5E",
+          secondary: "#798BFF",
+          surface: "#2A3F60",
+          "surface-2": "#F5F5F5",
+          "surface-3": "#F2F2F7",
+          border: "#E5E7EB",
+          ink: "#020617",
+          "ink-strong": "#111111",
+          muted: "#999999",
+          "muted-fg": "#727272",
+          "border-card": "#E9E9E9",
+          "border-row": "#F1F1F1",
+          "surface-row-hover": "#F9F9FC",
+          "surface-selected": "#F5F5FF",
+          "avatar-default": "#D6D6D6",
+          "status-active": "#007A55",
+          "status-blocked": "#C10007",
+        },
+        brand: {
+          indigo: "#1F1E5E",
+          periwinkle: "#798BFF",
+          "deep-navy": "#2A3F60",
+        },
+        surface: {
+          section: "#F5F5F5",
+          input: "#F2F2F7",
+          card: "#FFFFFF",
+        },
+        "border-hairline": "#E5E7EB",
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+        card: "var(--radius-card)",
+        pill: "9999px",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      fontSize: {
+        'caption':  ['11px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '500' }],
+        'label':    ['12px', { lineHeight: '16px', letterSpacing: '0.04em', fontWeight: '500' }],
+        'body-sm':  ['13px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }],
+        'body':     ['14px', { lineHeight: '22px', letterSpacing: '0em', fontWeight: '400' }],
+        'body-lg':  ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }],
+        'section-title':    ['16px', { lineHeight: '20px', letterSpacing: '0em',    fontWeight: '600' }],
+        'section-title-lg': ['20px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'heading-sm':       ['18px', { lineHeight: '24px', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'heading':          ['20px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'heading-lg':       ['24px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'headline':         ['24px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'title':            ['22px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'display-sm':       ['28px', { lineHeight: '36px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display':          ['32px', { lineHeight: '40px', letterSpacing: '-0.03em', fontWeight: '800' }],
+        'display-xl':       ['80px', { lineHeight: '1',    letterSpacing: '-0.03em', fontWeight: '800' }],
+        'card-title':       ['22px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'avatar-initials':    ['120px', { lineHeight: '1', letterSpacing: '-0.05em',   fontWeight: '700' }],
+        'avatar-initials-sm': ['85px',  { lineHeight: '1', letterSpacing: '-0.0235em', fontWeight: '500' }],
+      },
+      boxShadow: {
+        'std-sm':  '0 1px 2px rgba(31, 30, 94, 0.04)',
+        'std-md':  '0 2px 8px rgba(31, 30, 94, 0.06)',
+        'std-lg':  '0 4px 16px rgba(31, 30, 94, 0.08)',
+        'std-card': '0 2px 12px rgba(31, 30, 94, 0.08)',
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+};

@@ -1,0 +1,209 @@
+name: std-cards
+
+x-backend-env: &backend-env
+  ENVIRONMENT: prod
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  DATABASE_URL: postgresql+asyncpg://std_cards:${POSTGRES_PASSWORD:?}@postgres:5432/std_cards
+  JWT_SECRET: ${JWT_SECRET:?}
+  NATS_URL: nats://nats:4222
+  MINIO_ENDPOINT: http://minio:9000
+  MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?}
+  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?}
+  MINIO_BUCKET_CARDS: std-cards-media
+  MINIO_BUCKET_IMPORTS: std-cards-imports
+  FRONTEND_URL: https://${DOMAIN:?}
+  PUBLIC_CARD_BASE_URL: https://${DOMAIN:?}
+  ALLOWED_ORIGINS: '["https://${DOMAIN:?}"]'
+  SEED_SUPER_ADMIN_EMAIL: ${SEED_SUPER_ADMIN_EMAIL:?}
+  SEED_SUPER_ADMIN_PASSWORD: ${SEED_SUPER_ADMIN_PASSWORD:?}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  SENTRY_ENVIRONMENT: prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: std_cards
+      POSTGRES_USER: std_cards
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U std_cards -d std_cards"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  nats:
+    image: nats:2.10-alpine
+    restart: unless-stopped
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing local/std-cards-media
+        mc mb --ignore-existing local/std-cards-imports
+        mc mb --ignore-existing local/std-cards-backups
+        echo "MinIO buckets ready"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?}
+
+  migrate:
+    image: ${API_IMAGE:-std-cards-api:prod}
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        alembic upgrade head
+        python -m std_cards.seed.seed
+    environment: *backend-env
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ${API_IMAGE:-std-cards-api:prod}
+    restart: unless-stopped
+    # forwarded-allow-ips=*: api не публикуется наружу, XFF санитизирует Caddy (v2.5+)
+    command:
+      [
+        "uvicorn",
+        "std_cards.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--proxy-headers",
+        "--forwarded-allow-ips=*",
+      ]
+    environment: *backend-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+
+  worker:
+    image: ${API_IMAGE:-std-cards-api:prod}
+    restart: unless-stopped
+    command: ["python", "-m", "std_cards.worker_main"]
+    environment: *backend-env
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-std-cards-frontend:prod}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?}
+      ACME_EMAIL: ${ACME_EMAIL:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      frontend:
+        condition: service_started
+
+  # Крон-задачи: запускаются из /etc/cron.d/std-cards через `docker compose run --rm <svc>`
+  partitions:
+    profiles: ["cron"]
+    image: ${API_IMAGE:-std-cards-api:prod}
+    restart: "no"
+    environment: *backend-env
+    healthcheck:
+      disable: true
+    command:
+      - python
+      - -c
+      - |
+        import asyncio
+        from std_cards.db.session import get_engine
+        from std_cards.db.partitions import ensure_next_month
+
+        async def main():
+            engine = get_engine()
+            async with engine.connect() as conn:
+                await ensure_next_month(conn)
+                await conn.commit()
+            await engine.dispose()
+
+        asyncio.run(main())
+
+  backup:
+    profiles: ["cron"]
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        f="/backups/std_cards_$$(date +%Y%m%d_%H%M%S).sql.gz"
+        pg_dump -h postgres -U std_cards -d std_cards | gzip > "$$f"
+        find /backups -name 'std_cards_*.sql.gz' -mtime +30 -delete
+        echo "backup done: $$f"
+
+volumes:
+  pg-data:
+  nats-data:
+  minio-data:
+  caddy-data:
+  caddy-config:

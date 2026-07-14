@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+deploy/onprem/images/
+deploy/onprem/backups/
+deploy/onprem/dist/
+.DS_Store

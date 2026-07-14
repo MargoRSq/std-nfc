@@ -1,0 +1,113 @@
+{# Messenger/social link macros for "Служебная информация" section. #}
+
+{% set MESSENGER_TYPES = [
+  'telegram','whatsapp','instagram','facebook','twitter','youtube','tiktok',
+  'snapchat','twitch','discord','linkedin','vk','ok','max','dribbble','behance',
+  'pinterest','reddit','spotify','skype','messenger','patreon','medium'
+] %}
+
+{% macro is_messenger(type) -%}
+{%- if type in MESSENGER_TYPES %}1{% endif -%}
+{%- endmacro %}
+
+{% macro label(type) -%}
+{%- if type == 'telegram' %}Telegram
+{%- elif type == 'whatsapp' %}WhatsApp
+{%- elif type == 'instagram' %}Instagram
+{%- elif type == 'facebook' %}Facebook
+{%- elif type == 'twitter' %}X
+{%- elif type == 'youtube' %}YouTube
+{%- elif type == 'tiktok' %}TikTok
+{%- elif type == 'snapchat' %}Snapchat
+{%- elif type == 'twitch' %}Twitch
+{%- elif type == 'discord' %}Discord
+{%- elif type == 'linkedin' %}LinkedIn
+{%- elif type == 'vk' %}ВКонтакте
+{%- elif type == 'ok' %}Одноклассники
+{%- elif type == 'max' %}MAX
+{%- elif type == 'dribbble' %}Dribbble
+{%- elif type == 'behance' %}Behance
+{%- elif type == 'pinterest' %}Pinterest
+{%- elif type == 'reddit' %}Reddit
+{%- elif type == 'spotify' %}Spotify
+{%- elif type == 'skype' %}Skype
+{%- elif type == 'messenger' %}Messenger
+{%- elif type == 'patreon' %}Patreon
+{%- elif type == 'medium' %}Medium
+{%- else %}{{ type | capitalize }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro href(type, value) -%}
+{%- set v = (value or '') | trim -%}
+{%- if v[:8] == 'https://' or v[:7] == 'http://' -%}{{ v }}
+{%- elif type == 'telegram' -%}https://t.me/{{ v | replace('@','') }}
+{%- elif type == 'whatsapp' -%}https://wa.me/{{ v | replace('+','') | replace(' ','') | replace('-','') | replace('(','') | replace(')','') }}
+{%- elif type == 'instagram' -%}https://instagram.com/{{ v | replace('@','') }}
+{%- elif type == 'facebook' -%}https://facebook.com/{{ v }}
+{%- elif type == 'twitter' -%}https://x.com/{{ v | replace('@','') }}
+{%- elif type == 'youtube' -%}https://youtube.com/{{ v }}
+{%- elif type == 'tiktok' -%}https://tiktok.com/@{{ v | replace('@','') }}
+{%- elif type == 'snapchat' -%}https://snapchat.com/add/{{ v | replace('@','') }}
+{%- elif type == 'twitch' -%}https://twitch.tv/{{ v | replace('@','') }}
+{%- elif type == 'discord' -%}https://discord.com/users/{{ v | replace('@','') }}
+{%- elif type == 'linkedin' -%}https://linkedin.com/in/{{ v }}
+{%- elif type == 'vk' -%}https://vk.com/{{ v }}
+{%- elif type == 'ok' -%}https://ok.ru/{{ v }}
+{%- elif type == 'max' -%}https://max.ru/{{ v | replace('@','') }}
+{%- elif type == 'dribbble' -%}https://dribbble.com/{{ v | replace('@','') }}
+{%- elif type == 'behance' -%}https://behance.net/{{ v | replace('@','') }}
+{%- elif type == 'pinterest' -%}https://pinterest.com/{{ v | replace('@','') }}
+{%- elif type == 'reddit' -%}https://reddit.com/user/{{ v | replace('u/','') | replace('@','') }}
+{%- elif type == 'spotify' -%}https://open.spotify.com/user/{{ v }}
+{%- elif type == 'skype' -%}skype:{{ v }}?chat
+{%- elif type == 'messenger' -%}https://m.me/{{ v | replace('@','') }}
+{%- elif type == 'patreon' -%}https://patreon.com/{{ v | replace('@','') }}
+{%- elif type == 'medium' -%}https://medium.com/@{{ v | replace('@','') }}
+{%- else -%}{{ v }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro short(value) -%}
+{%- set ns = namespace(b=(value or '') | trim) -%}
+{%- if ns.b[:8] == 'https://' %}{% set ns.b = ns.b[8:] %}{% endif -%}
+{%- if ns.b[:7] == 'http://' %}{% set ns.b = ns.b[7:] %}{% endif -%}
+{%- if ns.b[:4] == 'www.' %}{% set ns.b = ns.b[4:] %}{% endif -%}
+{%- if ns.b[-1:] == '/' %}{% set ns.b = ns.b[:-1] %}{% endif -%}
+{%- if ns.b | length > 30 -%}{{ ns.b[:18] }}…{{ ns.b[-8:] }}{%- else -%}{{ ns.b }}{%- endif -%}
+{%- endmacro %}
+
+{% macro icon(type) -%}
+{%- if type == 'telegram' -%}
+<img class="msg-ico" src="/messengers/telegram.svg" alt="Telegram">
+
+{%- elif type == 'whatsapp' or type == 'skype' or type == 'messenger' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>
+{%- elif type == 'instagram' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+{%- elif type == 'facebook' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+{%- elif type == 'twitter' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+{%- elif type == 'youtube' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+{%- elif type == 'tiktok' or type == 'spotify' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+{%- elif type == 'snapchat' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>
+{%- elif type == 'twitch' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7"/></svg>
+{%- elif type == 'discord' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M6 12c0-1.7.7-3.2 1.8-4.2"/><circle cx="12" cy="12" r="2"/><path d="M18 12c0 1.7-.7 3.2-1.8 4.2"/></svg>
+{%- elif type == 'linkedin' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+{%- elif type == 'max' -%}
+<img class="msg-ico" src="/messengers/max.svg" alt="MAX">
+{%- elif type == 'vk' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="18" rx="4"/><path d="M7 9l3 6 2-4 2 4 3-6"/></svg>
+{%- elif type == 'ok' -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M6 14c2 2 4 3 6 3s4-1 6-3"/><path d="M9 21l3-4 3 4"/></svg>
+{%- else -%}
+<svg class="msg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>
+{%- endif -%}
+{%- endmacro %}

@@ -629,6 +629,15 @@ export function CardEditPage({ mode }: CardEditPageProps) {
     return out;
   }
 
+  function onInvalid() {
+    toast.error("Заполните обязательные поля — они отмечены красным");
+    requestAnimationFrame(() => {
+      document
+        .querySelector('[aria-invalid="true"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   function onSubmit(data: CardFormData) {
     const payload = buildPayload(data);
     const diffs = computeCriticalDiffs(data);
@@ -783,7 +792,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
         <Form {...form}>
           <form
             id="card-edit-form"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, onInvalid)}
             className="space-y-4 lg:col-span-2"
           >
             <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start lg:space-y-0">

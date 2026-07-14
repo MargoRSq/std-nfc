@@ -1,5 +1,6 @@
 import contextlib
 import hashlib
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
@@ -14,6 +15,7 @@ from std_cards.core.exceptions import (
     RefreshReuseError,
     UnauthorizedError,
 )
+from std_cards.core.mailer import send_password_reset
 from std_cards.core.ratelimit import login_rate_limiter
 from std_cards.core.security import (
     create_access_token,
@@ -39,6 +41,8 @@ from std_cards.infrastructure.repositories import (
 )
 from std_cards.models.audit import AuditAction
 from std_cards.models.auth import ConsumeResult, UserDB, UserPublic
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -583,6 +587,13 @@ class AuthService:
             ip=ip,
             user_agent=user_agent,
         )
+        reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={raw}"
+        try:
+            await send_password_reset(user.email, reset_url)
+        except Exception:
+            # Письмо не ушло — токен всё равно создан, юзер может повторить запрос.
+            # Ошибку наружу не отдаём: 204 не должен раскрывать существование аккаунта.
+            logger.exception("Не удалось отправить письмо сброса пароля на %s", user.email)
         return raw
 
     async def password_reset_confirm(

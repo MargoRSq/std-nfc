@@ -11,7 +11,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-echo "==> 1/6 Docker"
+echo "==> 1/7 Docker"
 if ! command -v docker >/dev/null 2>&1; then
     echo "Docker не найден, ставлю с get.docker.com (нужен интернет)..."
     curl -fsSL https://get.docker.com | sh
@@ -21,7 +21,7 @@ docker compose version >/dev/null 2>&1 || {
     exit 1
 }
 
-echo "==> 2/6 Образы"
+echo "==> 2/7 Образы"
 BACKEND_DIR=$DIR/../../backend
 FRONTEND_DIR=$DIR/../../frontend
 if [ -d images ] && ls images/*.tar >/dev/null 2>&1; then
@@ -38,7 +38,7 @@ else
     exit 1
 fi
 
-echo "==> 3/6 Конфигурация (.env)"
+echo "==> 3/7 Конфигурация (.env)"
 if [ ! -f .env ]; then
     cp .env.example .env
 fi
@@ -61,11 +61,11 @@ if grep -q '^DOMAIN=cards.example.ru$' .env; then
     exit 1
 fi
 
-echo "==> 4/6 Запуск"
+echo "==> 4/7 Запуск"
 mkdir -p backups
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/6 Кроны (партиции + бэкап БД)"
+echo "==> 5/7 Кроны (партиции + бэкап БД)"
 cat > /etc/cron.d/std-cards <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -74,7 +74,36 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
 chmod 644 /etc/cron.d/std-cards
 
-echo "==> 6/6 Проверка"
+echo "==> 6/7 Автозапуск при включении сервера"
+systemctl enable docker >/dev/null 2>&1 || true
+BACKUP_DIR_VALUE=$(grep '^BACKUP_DIR=' .env | cut -d= -f2 || true)
+REQUIRES_MOUNT=""
+case "$BACKUP_DIR_VALUE" in
+    /*) REQUIRES_MOUNT="RequiresMountsFor=$BACKUP_DIR_VALUE" ;;
+esac
+cat > /etc/systemd/system/std-cards.service <<EOF
+[Unit]
+Description=std-cards (docker compose)
+Requires=docker.service
+After=docker.service network-online.target
+$REQUIRES_MOUNT
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=$DIR
+ExecStart=$(command -v docker) compose up -d --wait --wait-timeout 300
+ExecStop=$(command -v docker) compose stop
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable std-cards.service >/dev/null 2>&1
+echo "  systemd unit std-cards.service включён"
+
+echo "==> 7/7 Проверка"
 docker compose ps
 docker compose exec -T api curl -fsS http://localhost:8000/healthz && echo " — api OK"
 docker compose exec -T api curl -fsS http://localhost:8000/readyz && echo " — api ready"

@@ -78,6 +78,17 @@ class SeedConf(BaseSettings):
     SUPER_ADMIN_PASSWORD: str = "ChangeMe123!"
 
 
+class SmtpConf(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="smtp_", extra="ignore")
+
+    HOST: str = ""
+    PORT: int = 465
+    USER: str = ""
+    PASSWORD: str = ""
+    FROM: str = ""
+    SSL: bool = True
+
+
 class SentryConf(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="sentry_", extra="ignore")
 
@@ -110,6 +121,7 @@ class Settings(BaseSettings):
     RATE_LIMIT: RateLimitConf = Field(default_factory=RateLimitConf)
     SEED: SeedConf = Field(default_factory=SeedConf)
     SENTRY: SentryConf = Field(default_factory=SentryConf)
+    SMTP: SmtpConf = Field(default_factory=SmtpConf)
 
     @model_validator(mode="after")
     def _prod_secrets_guard(self) -> "Settings":

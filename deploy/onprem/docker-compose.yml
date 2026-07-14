@@ -16,6 +16,12 @@ x-backend-env: &backend-env
   ALLOWED_ORIGINS: '["https://${DOMAIN:?}"]'
   SEED_SUPER_ADMIN_EMAIL: ${SEED_SUPER_ADMIN_EMAIL:?}
   SEED_SUPER_ADMIN_PASSWORD: ${SEED_SUPER_ADMIN_PASSWORD:?}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  SMTP_SSL: ${SMTP_SSL:-true}
   SENTRY_DSN: ${SENTRY_DSN:-}
   SENTRY_ENVIRONMENT: prod
 
@@ -191,7 +197,7 @@ services:
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD:?}
     volumes:
-      - ./backups:/backups
+      - ${BACKUP_DIR:-./backups}:/backups
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |

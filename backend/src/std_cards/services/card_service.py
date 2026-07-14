@@ -230,6 +230,8 @@ class CardService:
             current_label_set=card.label_set,
             template=tpl,
         )
+        if tpl.category_id is not None:
+            overrides["category_id"] = tpl.category_id
         update_payload = CardUpdate(template_id=template_id, **overrides)
         updated = await self.cards.update(id, update_payload)
         if updated is None:

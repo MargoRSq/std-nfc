@@ -27,6 +27,13 @@ sudo ./postcheck.sh  # E2E-проверка: логин → карточка →
 `SEED_SUPER_ADMIN_PASSWORD` из `deploy/onprem/.env`. TLS-сертификат Let's Encrypt
 выпускается автоматически (Caddy).
 
+## Обновление до новой версии
+
+```bash
+cd std-nfc/deploy/onprem
+sudo ./update.sh    # git pull → бэкап БД → пересборка → перезапуск → проверка
+```
+
 Полная инструкция, offline-установка (сервер без интернета), эксплуатация, бэкапы
 и диагностика: **[deploy/onprem/README.md](deploy/onprem/README.md)**.
 

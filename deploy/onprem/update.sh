@@ -9,7 +9,7 @@ cd "$DIR"
 
 REPO_ROOT=$(CDPATH= cd -- "$DIR/../.." && pwd)
 
-echo "==> 1/5 Обновление кода"
+echo "==> 1/6 Обновление кода"
 if [ -d "$REPO_ROOT/.git" ]; then
     git -C "$REPO_ROOT" pull --ff-only
     git -C "$REPO_ROOT" log -1 --oneline
@@ -17,11 +17,11 @@ else
     echo "  каталог не git-клон — пропускаю pull (offline-установка: замените файлы из нового бандла и перезапустите)"
 fi
 
-echo "==> 2/5 Бэкап БД перед обновлением"
+echo "==> 2/6 Бэкап БД перед обновлением"
 mkdir -p backups
 docker compose run --rm backup
 
-echo "==> 3/5 Пересборка образов"
+echo "==> 3/6 Пересборка образов"
 API_IMAGE=$(grep '^API_IMAGE=' .env | cut -d= -f2)
 FRONTEND_IMAGE=$(grep '^FRONTEND_IMAGE=' .env | cut -d= -f2)
 if [ -d "$REPO_ROOT/backend" ] && [ -d "$REPO_ROOT/frontend" ]; then
@@ -34,10 +34,13 @@ else
     exit 1
 fi
 
-echo "==> 4/5 Перезапуск (миграции применятся автоматически)"
+echo "==> 4/6 Перезапуск (миграции применятся автоматически)"
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/5 Проверка"
+echo "==> 5/6 Автозапуск (идемпотентно)"
+./setup-autostart.sh
+
+echo "==> 6/6 Проверка"
 if [ -x ./postcheck.sh ]; then
     ./postcheck.sh
 else

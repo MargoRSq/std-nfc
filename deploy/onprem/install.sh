@@ -75,33 +75,7 @@ EOF
 chmod 644 /etc/cron.d/std-cards
 
 echo "==> 6/7 Автозапуск при включении сервера"
-systemctl enable docker >/dev/null 2>&1 || true
-BACKUP_DIR_VALUE=$(grep '^BACKUP_DIR=' .env | cut -d= -f2 || true)
-REQUIRES_MOUNT=""
-case "$BACKUP_DIR_VALUE" in
-    /*) REQUIRES_MOUNT="RequiresMountsFor=$BACKUP_DIR_VALUE" ;;
-esac
-cat > /etc/systemd/system/std-cards.service <<EOF
-[Unit]
-Description=std-cards (docker compose)
-Requires=docker.service
-After=docker.service network-online.target
-$REQUIRES_MOUNT
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=$DIR
-ExecStart=$(command -v docker) compose up -d --wait --wait-timeout 300
-ExecStop=$(command -v docker) compose stop
-TimeoutStartSec=600
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload
-systemctl enable std-cards.service >/dev/null 2>&1
-echo "  systemd unit std-cards.service включён"
+./setup-autostart.sh
 
 echo "==> 7/7 Проверка"
 docker compose ps

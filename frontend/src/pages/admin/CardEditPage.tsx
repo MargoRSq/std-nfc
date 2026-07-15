@@ -347,31 +347,61 @@ export function CardEditPage({ mode }: CardEditPageProps) {
 
   const watchedValues = useWatch({ control: form.control });
 
+  // Оформление берётся из шаблона категории: смена категории должна
+  // перекрашивать билет в цвета её шаблона (как при выборе шаблона).
+  const applyTemplateStyles = useCallback(
+    (tpl: { default_styles?: unknown; default_fields?: unknown } | undefined) => {
+      if (!tpl) return;
+      const styles = (tpl.default_styles ?? {}) as {
+        bg_kind?: "solid" | "gradient";
+        bg_color?: string;
+        bg_gradient?: { start?: string; end?: string; from?: string; to?: string; angle?: number };
+        photo_shape?: "square" | "circle";
+      };
+      if (styles.bg_kind) form.setValue("bg_kind", styles.bg_kind, { shouldDirty: true });
+      if (styles.bg_color) form.setValue("bg_color", styles.bg_color, { shouldDirty: true });
+      if (styles.bg_gradient) {
+        form.setValue(
+          "bg_gradient_from",
+          styles.bg_gradient.start ?? styles.bg_gradient.from ?? "#1F1E5E",
+          { shouldDirty: true },
+        );
+        form.setValue(
+          "bg_gradient_to",
+          styles.bg_gradient.end ?? styles.bg_gradient.to ?? "#798BFF",
+          { shouldDirty: true },
+        );
+        if (styles.bg_gradient.angle) {
+          form.setValue("bg_gradient_angle", styles.bg_gradient.angle, { shouldDirty: true });
+        }
+      }
+      if (styles.photo_shape) {
+        form.setValue("photo_shape", styles.photo_shape, { shouldDirty: true });
+        setPhotoShape(styles.photo_shape);
+      }
+      const fields = (tpl.default_fields ?? {}) as Record<string, string>;
+      if (fields.chairman) form.setValue("chairman", fields.chairman, { shouldDirty: true });
+    },
+    [form],
+  );
+
+  function handleCategoryChange(categoryId: number) {
+    form.setValue("category_id", categoryId, { shouldDirty: true });
+    const tpl =
+      templates?.find((t) => t.category_id === categoryId && t.is_default) ??
+      templates?.find((t) => t.category_id === categoryId);
+    if (!tpl) return;
+    form.setValue("template_id", tpl.id, { shouldDirty: true });
+    applyTemplateStyles(tpl);
+  }
+
   useEffect(() => {
     if (mode !== "create" || !initialTemplateId || !templates) return;
     const tpl = templates.find((t) => t.id === initialTemplateId);
     if (!tpl) return;
     if (tpl.category_id) form.setValue("category_id", tpl.category_id);
-    const styles = (tpl.default_styles ?? {}) as {
-      bg_kind?: "solid" | "gradient";
-      bg_color?: string;
-      bg_gradient?: { start?: string; end?: string; from?: string; to?: string; angle?: number };
-      photo_shape?: "square" | "circle";
-    };
-    if (styles.bg_kind) form.setValue("bg_kind", styles.bg_kind);
-    if (styles.bg_color) form.setValue("bg_color", styles.bg_color);
-    if (styles.bg_gradient) {
-      form.setValue("bg_gradient_from", styles.bg_gradient.start ?? styles.bg_gradient.from ?? "#1F1E5E");
-      form.setValue("bg_gradient_to", styles.bg_gradient.end ?? styles.bg_gradient.to ?? "#798BFF");
-      if (styles.bg_gradient.angle) form.setValue("bg_gradient_angle", styles.bg_gradient.angle);
-    }
-    if (styles.photo_shape) {
-      form.setValue("photo_shape", styles.photo_shape);
-      setPhotoShape(styles.photo_shape);
-    }
-    const fields = (tpl.default_fields ?? {}) as Record<string, string>;
-    if (fields.chairman) form.setValue("chairman", fields.chairman);
-  }, [mode, initialTemplateId, templates, form]);
+    applyTemplateStyles(tpl);
+  }, [mode, initialTemplateId, templates, form, applyTemplateStyles]);
 
   useEffect(() => {
     if (card) {
@@ -1052,7 +1082,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
                         <Select
                           key={`cat-${categories?.length ?? 0}-${field.value ?? "none"}`}
                           value={field.value ? String(field.value) : ""}
-                          onValueChange={(v) => field.onChange(Number(v))}
+                          onValueChange={(v) => handleCategoryChange(Number(v))}
                         >
                           <FormControl>
                             <SelectTrigger className="bg-white rounded-xl">

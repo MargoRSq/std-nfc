@@ -108,6 +108,15 @@ else
     fail "бэкап не отработал: docker compose run --rm backup"
 fi
 
+echo "== 6. Восстановимость бэкапа =="
+# Целый архив ≠ рабочий бэкап: восстановление может падать на схеме.
+if [ -x ./verify-backup.sh ]; then
+    VERIFY_OUT=$(./verify-backup.sh 2>&1) && ok "${VERIFY_OUT##*OK: }" \
+        || { fail "бэкап не восстанавливается"; echo "$VERIFY_OUT" | sed 's/^/      /' | head -6; }
+else
+    warn "verify-backup.sh не найден — восстановимость не проверена"
+fi
+
 echo ""
 echo "Итог: OK=$PASS WARN=$WARN FAIL=$FAIL"
 [ "$FAIL" -gt 0 ] && { echo "Есть проблемы — см. [FAIL] выше."; exit 1; }

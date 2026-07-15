@@ -174,6 +174,11 @@ class CardService:
                     update={"category_id": default_tpl.category_id, "template_id": default_tpl.id},
                 )
         cats = await self.categories.list_all()
+        # Без шаблона — «Стандартная», а не первая попавшаяся: иначе член без
+        # выбранной категории молча получал уровень (Платиновые/Бронзовые).
+        standard = next((c for c in cats if c.code == "standard"), None)
+        if standard is not None:
+            return data.model_copy(update={"category_id": standard.id})
         if cats:
             return data.model_copy(update={"category_id": cats[0].id})
         raise ValidationFailedError(message="No categories or default template configured")

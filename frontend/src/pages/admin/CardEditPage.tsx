@@ -29,6 +29,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FioInput } from "@/components/cards/FioInput";
 import { SortablePresetRow } from "@/components/cards/SortablePresetRow";
 import { defaultFieldOrder, buildFieldRenderOrder } from "@/components/cards/cardFields";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LogoSelector } from "@/components/cards/LogoSelector";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -61,6 +68,7 @@ import { SlugCreateModal } from "@/components/cards/SlugCreateModal";
 import { useDirtyFormBlocker } from "@/hooks/useDirtyFormBlocker";
 import { cardsApi, type CardCreateRequest } from "@/lib/api/cards";
 import { cardMessagesApi } from "@/lib/api/cardMessages";
+import { categoriesApi } from "@/lib/api/categories";
 import { templatesApi } from "@/lib/api/templates";
 import { apiClient } from "@/lib/api/client";
 import axios from "axios";
@@ -291,6 +299,12 @@ export function CardEditPage({ mode }: CardEditPageProps) {
     onError: () => {
       toast.error("Не удалось удалить сообщение");
     },
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoriesApi.list().then((r) => r.data),
+    staleTime: 5 * 60_000,
   });
 
   const { data: templates } = useQuery({
@@ -1025,6 +1039,38 @@ export function CardEditPage({ mode }: CardEditPageProps) {
               <section className="bg-std-surface-2 border-[3px] border-std-secondary rounded-3xl px-4 py-3">
                 <h2 className="text-base font-semibold text-std-ink mb-3">Служебная информация</h2>
                 <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="category_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-std-muted">Категория</FormLabel>
+                        {/* key по значению и справочнику: Select монтируется
+                            пустым (form.reset приходит после), а Radix не
+                            перерисовывает текст закрытого списка — залипал
+                            на плейсхолдере. Ремоунт заставляет показать выбранное. */}
+                        <Select
+                          key={`cat-${categories?.length ?? 0}-${field.value ?? "none"}`}
+                          value={field.value ? String(field.value) : ""}
+                          onValueChange={(v) => field.onChange(Number(v))}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white rounded-xl">
+                              <SelectValue placeholder="Выберите категорию" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(categories ?? []).map((c) => (
+                              <SelectItem key={c.id} value={String(c.id)}>
+                                {c.name_ru}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <ContactBlocksEditor
                     value={internalBlocks}
                     onChange={setInternalBlocks}

@@ -9,6 +9,7 @@ from std_cards.logo_presets import is_valid_logo_key
 
 
 class CategoryCode(StrEnum):
+    STANDARD = "standard"
     PLATINUM = "platinum"
     GOLD = "gold"
     SILVER = "silver"

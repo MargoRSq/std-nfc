@@ -22,10 +22,12 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS unaccent")
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
+    # Схему указываем явно: pg_dump восстанавливает дамп с пустым search_path,
+    # неквалифицированный unaccent там не резолвится и ломает весь restore.
     op.execute("""
-        CREATE OR REPLACE FUNCTION immutable_unaccent(text)
+        CREATE OR REPLACE FUNCTION public.immutable_unaccent(text)
         RETURNS text AS $$
-            SELECT unaccent($1)
+            SELECT public.unaccent('public.unaccent'::regdictionary, $1)
         $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
     """)
 

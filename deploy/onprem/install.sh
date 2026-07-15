@@ -65,15 +65,8 @@ echo "==> 4/7 Запуск"
 mkdir -p backups
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/7 Кроны (партиции + бэкап БД)"
-cat > /etc/cron.d/std-cards <<EOF
-SHELL=/bin/sh
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-0 2 * * * root cd $DIR && docker compose run --rm partitions >> /var/log/std-cards-cron.log 2>&1
-0 3 * * * root cd $DIR && docker compose run --rm backup >> /var/log/std-cards-cron.log 2>&1
-30 4 * * 1 root cd $DIR && ./verify-backup.sh >> /var/log/std-cards-cron.log 2>&1
-EOF
-chmod 644 /etc/cron.d/std-cards
+echo "==> 5/7 Регулярные задачи (кроны)"
+./setup-cron.sh
 
 echo "==> 6/7 Автозапуск при включении сервера"
 ./setup-autostart.sh

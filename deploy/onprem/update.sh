@@ -37,8 +37,9 @@ fi
 echo "==> 4/6 Перезапуск (миграции применятся автоматически)"
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/6 Автозапуск (идемпотентно)"
+echo "==> 5/6 Автозапуск и кроны (идемпотентно)"
 ./setup-autostart.sh
+./setup-cron.sh
 
 echo "==> 6/6 Проверка"
 if [ -x ./postcheck.sh ]; then

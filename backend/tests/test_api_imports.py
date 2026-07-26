@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from std_cards.core.security import hash_password
 from std_cards.models.auth import UserCreate, UserRole
 from std_cards.models.import_job import ImportStatus
-from std_cards.services.import_service import EXPECTED_HEADERS
+from std_cards.services.import_service import EXPECTED_HEADERS, RU_HEADERS
 
 
 @pytest.fixture
@@ -50,7 +50,9 @@ async def test_download_empty_template(client: AsyncClient, auth_headers):
     wb = openpyxl.load_workbook(io.BytesIO(r.content))
     ws = wb.active
     headers = [cell.value for cell in ws[1]]
-    assert headers == EXPECTED_HEADERS
+    # шаблон для заказчика русскоязычный; EXPECTED_HEADERS остаётся machine-именами,
+    # которые импорт принимает наравне с русскими (HEADER_ALIASES)
+    assert headers == RU_HEADERS
 
 
 async def test_upload_excel_creates_job(client: AsyncClient, auth_headers):

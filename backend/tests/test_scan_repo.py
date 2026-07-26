@@ -21,7 +21,12 @@ async def _make_card(session_maker, user_id, slug=None):
     repo = CardRepository(session_maker)
     slug = slug or f"sl{uuid4().hex[:6]}"
     return await repo.create(
-        CardCreate(last_name="Тест", first_name="Иван", membership_no="MBR-01", category_id=1),
+        CardCreate(
+            last_name="Тест",
+            first_name="Иван",
+            membership_no=f"MBR-{uuid4().hex[:8]}",
+            category_id=1,
+        ),
         slug=slug,
         created_by=user_id,
     )
@@ -89,7 +94,7 @@ async def test_by_day(scan_repo, session_maker):
     assert "count" in rows[0]
 
 
-async def test_top_countries(scan_repo, session_maker):
+async def test_top_regions(scan_repo, session_maker):
     user = await _make_user(session_maker)
     card = await _make_card(session_maker, user.id)
 
@@ -114,10 +119,11 @@ async def test_top_countries(scan_repo, session_maker):
 
     from_dt = now - timedelta(days=1)
     to_dt = now + timedelta(days=1)
-    rows = await scan_repo.top_countries(from_dt=from_dt, to_dt=to_dt, limit=5)
-    codes = [r["country_code"] for r in rows]
+    # region = coalesce(city, country_code): city не задан, поэтому это код страны
+    rows = await scan_repo.top_regions(from_dt=from_dt, to_dt=to_dt, limit=5)
+    codes = [r["region"] for r in rows]
     assert "RU" in codes
-    assert rows[0]["country_code"] == "RU"
+    assert rows[0]["region"] == "RU"
 
 
 async def test_top_cards(scan_repo, session_maker):

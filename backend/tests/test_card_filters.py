@@ -29,7 +29,7 @@ async def super_headers(client: AsyncClient, user_repo):
 
 async def test_list_cards_invalid_date_field(client: AsyncClient, super_headers):
     r = await client.get("/api/cards/?date_field=garbage", headers=super_headers)
-    assert r.status_code == 400
+    assert r.status_code == 422
 
 
 async def test_list_cards_date_from_after_to(client: AsyncClient, super_headers):
@@ -37,12 +37,23 @@ async def test_list_cards_date_from_after_to(client: AsyncClient, super_headers)
         "/api/cards/?date_from=2026-12-31&date_to=2026-01-01",
         headers=super_headers,
     )
-    assert r.status_code == 400
+    assert r.status_code == 422
 
 
-@pytest.mark.parametrize("date_field", ["added", "opened", "modified", "created", "issued"])
+# added/modified/created заполняются при создании; last_opened_at и card_issue_date
+# у новой карточки NULL, поэтому фильтр по ним корректно её отсекает.
+@pytest.mark.parametrize(
+    ("date_field", "matches_new_card"),
+    [
+        ("added", True),
+        ("modified", True),
+        ("created", True),
+        ("opened", False),
+        ("issued", False),
+    ],
+)
 async def test_list_cards_date_field_accepted(
-    client: AsyncClient, super_headers, date_field: str
+    client: AsyncClient, super_headers, date_field: str, matches_new_card: bool
 ):
     await client.post("/api/cards/", json=_CARD_PAYLOAD, headers=super_headers)
     r = await client.get(
@@ -50,4 +61,8 @@ async def test_list_cards_date_field_accepted(
         headers=super_headers,
     )
     assert r.status_code == 200
-    assert r.json()["total"] >= 1
+    total = r.json()["total"]
+    if matches_new_card:
+        assert total >= 1
+    else:
+        assert total == 0

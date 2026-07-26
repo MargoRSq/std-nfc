@@ -109,7 +109,8 @@ async def test_force_logout_bumps_token_version(session_maker):
     assert updated.token_version > old_version
 
 
-async def test_delete_admin_deactivates(session_maker):
+async def test_delete_admin_removes_user(session_maker):
+    """delete_admin удаляет запись; след остаётся только в audit_log."""
     actor = await _make_super_admin(session_maker)
     svc = _make_service(session_maker)
     user_repo = UserRepository(session_maker)
@@ -119,8 +120,7 @@ async def test_delete_admin_deactivates(session_maker):
 
     await svc.delete_admin(target.id, actor=actor)
 
-    updated = await user_repo.get_by_id(target.id)
-    assert updated.is_active is False
+    assert await user_repo.get_by_id(target.id) is None
 
 
 async def test_cannot_deactivate_self_even_with_other_supers(session_maker):

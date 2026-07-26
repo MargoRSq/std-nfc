@@ -28,7 +28,7 @@ def _mock_dashboard() -> DashboardResponse:
     return DashboardResponse(
         kpi=DashboardKpi(total_scans=100, last_30d_scans=30, unique_cards=5, active_members=5),
         by_day=[],
-        top_countries=[],
+        top_regions=[],
         top_devices=[],
         top_cards=[],
     )
@@ -50,7 +50,7 @@ async def test_dashboard_returns_structure(client: AsyncClient, auth_headers):
     body = r.json()
     assert "kpi" in body
     assert "by_day" in body
-    assert "top_countries" in body
+    assert "top_regions" in body
     assert "top_devices" in body
     assert "top_cards" in body
 

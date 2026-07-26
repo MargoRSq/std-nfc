@@ -83,9 +83,7 @@ async def dashboard_report(
 ) -> StreamingResponse:
     from_dt, to_dt = _resolve_range(from_, to)
     dashboard_data = await service.dashboard(from_dt, to_dt, user=user)
-    top_users = await service.top_active_users(
-        from_dt, to_dt, page=1, page_size=100, user=user
-    )
+    top_users = await service.top_active_users(from_dt, to_dt, page=1, page_size=100, user=user)
     content = build_dashboard_report(dashboard_data, top_users, from_dt, to_dt)
     filename = f"analytics-{from_dt.date().isoformat()}_{to_dt.date().isoformat()}.xlsx"
     await audit.write(
@@ -93,7 +91,11 @@ async def dashboard_report(
         actor_email=user.email,
         action=AuditAction.ANALYTICS_REPORT_EXPORT,
         entity_type="analytics",
-        diff={"scope": "dashboard", "from": from_dt.date().isoformat(), "to": to_dt.date().isoformat()},
+        diff={
+            "scope": "dashboard",
+            "from": from_dt.date().isoformat(),
+            "to": to_dt.date().isoformat(),
+        },
     )
     return StreamingResponse(
         iter([content]),

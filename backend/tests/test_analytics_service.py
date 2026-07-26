@@ -25,8 +25,9 @@ def _make_scan_repo(
     by_device=None,
 ):
     repo = AsyncMock()
+    # запрос за период идёт с обоими границами, «за 30 дней» — только с from_dt
     repo.total_scans = AsyncMock(
-        side_effect=lambda from_dt=None, to_dt=None: total if from_dt is None else last30
+        side_effect=lambda from_dt=None, to_dt=None, **_: total if to_dt is not None else last30
     )
     repo.by_day = AsyncMock(return_value=by_day or [])
     repo.top_regions = AsyncMock(return_value=regions or [])
@@ -35,7 +36,7 @@ def _make_scan_repo(
     repo.unique_cards = AsyncMock(return_value=unique)
     repo.last_scan = AsyncMock(return_value=last_scan)
     repo.card_total_scans = AsyncMock(return_value=card_total)
-    repo.by_country_for_card = AsyncMock(return_value=by_region or [])
+    repo.by_region_for_card = AsyncMock(return_value=by_region or [])
     repo.by_device_for_card = AsyncMock(return_value=by_device or [])
     return repo
 
@@ -98,7 +99,8 @@ async def test_dashboard_cache_expires():
 
     await svc.dashboard(from_dt, to_dt)
 
-    cache_key = f"dash:{from_dt.isoformat()}:{to_dt.isoformat()}"
+    # без user скоуп кеша — "all"
+    cache_key = f"dash:all:{from_dt.isoformat()}:{to_dt.isoformat()}"
     svc._cache[cache_key] = (time.monotonic() - 1, svc._cache[cache_key][1])
 
     await svc.dashboard(from_dt, to_dt)

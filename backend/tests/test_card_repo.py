@@ -14,10 +14,12 @@ async def _make_user(session_maker):
 
 
 def _make_create(category_id: int = 1, **kwargs) -> CardCreate:
+    # membership_no уникален среди неудалённых (uq_cards_membership_no_active),
+    # поэтому фиксированное значение ломает любой тест с двумя карточками.
+    kwargs.setdefault("membership_no", f"MBR-{uuid4().hex[:8]}")
     return CardCreate(
         last_name="Иванов",
         first_name="Иван",
-        membership_no="MBR-001",
         category_id=category_id,
         **kwargs,
     )

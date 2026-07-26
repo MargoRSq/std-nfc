@@ -69,6 +69,31 @@ async def test_public_card_robots_blocked(client: AsyncClient, session_maker):
     r = await client.get("/c/rbts01", headers={"User-Agent": "Googlebot/2.1"})
     assert r.status_code == 200
     assert "noindex" in r.headers["x-robots-tag"].lower()
+    assert 'name="robots"' in r.text
+
+
+async def test_public_card_no_noindex_for_link_preview(client: AsyncClient, session_maker):
+    """iMessage/Telegram-парсеры не должны видеть noindex — иначе не тянут og:image."""
+    user_repo = UserRepository(session_maker)
+    card_repo = CardRepository(session_maker)
+    admin = await user_repo.create(
+        UserCreate(email="a4@x.com", password_hash=hash_password("p"), role=UserRole.ADMIN)
+    )
+    await card_repo.create(
+        CardCreate(last_name="P", first_name="Q", membership_no="B", category_id=1),
+        slug="prvw01",
+        created_by=admin.id,
+    )
+    imessage_ua = (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/601.2.4 "
+        "(KHTML, like Gecko) Version/9.0.1 Safari/601.2.4 "
+        "facebookexternalhit/1.1 Facebot Twitterbot/1.0"
+    )
+    r = await client.get("/c/prvw01", headers={"User-Agent": imessage_ua})
+    assert r.status_code == 200
+    assert "x-robots-tag" not in r.headers
+    assert 'name="robots"' not in r.text
+    assert 'property="og:image"' in r.text
 
 
 async def test_burst_lockout_after_404_threshold(client: AsyncClient):

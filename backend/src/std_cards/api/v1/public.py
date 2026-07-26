@@ -16,6 +16,7 @@ from std_cards.api.deps import (
 )
 from std_cards.config import settings
 from std_cards.core.color import contrast_palette
+from std_cards.core.crawlers import NOINDEX, wants_link_preview
 from std_cards.core.exceptions import NotFoundError, RateLimitedError
 from std_cards.core.net import client_ip
 from std_cards.core.ratelimit import not_found_burst_lockout, public_scan_limiter
@@ -45,7 +46,7 @@ def _spawn(coro) -> None:
     task.add_done_callback(_log_exc)
 
 
-NOINDEX_HEADERS: dict[str, str] = {
+PUBLIC_PAGE_HEADERS: dict[str, str] = {
     "Cache-Control": "private, no-store, max-age=0",
     "X-Frame-Options": "DENY",
     "Content-Security-Policy": (
@@ -62,11 +63,26 @@ def _get_ip(request: Request) -> str:
     return client_ip(request) or "unknown"
 
 
+def _noindex(request: Request) -> bool:
+    return not wants_link_preview(request.headers.get("user-agent"))
+
+
+def _page_headers(request: Request) -> dict[str, str]:
+    headers = dict(PUBLIC_PAGE_HEADERS)
+    if _noindex(request):
+        headers["X-Robots-Tag"] = NOINDEX
+    return headers
+
+
 def _html_error(status: int, message_key: str) -> Response:
     t = get_translations()
     message = t.get(message_key, message_key)
     html = render("error.html", status=status, message=message)
-    return HTMLResponse(content=html, status_code=status, headers=NOINDEX_HEADERS)
+    return HTMLResponse(
+        content=html,
+        status_code=status,
+        headers={**PUBLIC_PAGE_HEADERS, "X-Robots-Tag": NOINDEX},
+    )
 
 
 _HEX_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -169,7 +185,7 @@ async def public_card(
                     "image_key": latest_msg_inactive.image_key,
                 },
             )
-            return HTMLResponse(content=html, status_code=200, headers=NOINDEX_HEADERS)
+            return HTMLResponse(content=html, status_code=200, headers=_page_headers(request))
         return _html_error(410, "card_invalid")
 
     await not_found_burst_lockout.reset(ip)
@@ -206,8 +222,9 @@ async def public_card(
         show_close=show_close,
         updated_unix=updated_unix,
         base_url=settings.PUBLIC_CARD_BASE_URL.rstrip("/"),
+        noindex=_noindex(request),
     )
-    return HTMLResponse(content=html, status_code=200, headers=NOINDEX_HEADERS)
+    return HTMLResponse(content=html, status_code=200, headers=_page_headers(request))
 
 
 @router.get("/c/{slug}/og.png", include_in_schema=False)
@@ -264,6 +281,7 @@ async def public_card_og(
 @router.get("/c/{slug}/contact", include_in_schema=False)
 async def public_contact_form(
     slug: str,
+    request: Request,
     card_service: CardServiceDep,
 ) -> Response:
     card = await card_service.cards.get_by_slug(slug)
@@ -273,7 +291,7 @@ async def public_contact_form(
         return _html_error(403, "feedback_unavailable")
     card_dict, _ = _safe_bg(card.model_dump())
     html = render("contact.html", slug=slug, card=card_dict)
-    return HTMLResponse(content=html, headers=NOINDEX_HEADERS)
+    return HTMLResponse(content=html, headers=_page_headers(request))
 
 
 class FeedbackBody(BaseModel):

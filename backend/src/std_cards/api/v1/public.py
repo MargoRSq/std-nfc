@@ -176,10 +176,11 @@ async def public_card(
     if not card.is_active:
         latest_msg_inactive = await message_repo.get_latest_active_for_card(card.id)
         if latest_msg_inactive is not None:
-            inactive_dict, _ = _safe_bg(card.model_dump())
+            inactive_dict, inactive_bg = _safe_bg(card.model_dump())
             html = render(
                 "invalid_card.html",
                 card=inactive_dict,
+                palette=contrast_palette(inactive_bg),
                 message={
                     "text": latest_msg_inactive.text,
                     "image_key": latest_msg_inactive.image_key,

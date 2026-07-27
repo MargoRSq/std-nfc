@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { UserX } from "lucide-react";
 import type { Card } from "@/lib/api/cards";
+import { cardPalette } from "@/lib/i18n/cardTranslations";
 
 const FALLBACK_BG = "#1F1E5E";
 const BRAND_NAVY = "#1F1E5E";
@@ -13,6 +14,13 @@ interface Props {
   logoAlt: string;
   messageText?: string | null;
   messageImageUrl?: string | null;
+}
+
+function cardBgSolid(card: Props["card"]): string {
+  if (card.bg_kind === "gradient" && card.bg_gradient) {
+    return card.bg_gradient.from || FALLBACK_BG;
+  }
+  return card.bg_color || FALLBACK_BG;
 }
 
 function cardHeaderBg(card: Props["card"]): string {
@@ -56,7 +64,11 @@ export function InvalidCardView({
               <img src={logo} alt={logoAlt} className="h-full w-auto max-w-full object-contain" />
             </div>
           ) : (
-            <img src="/std-logo-full.png" alt={logoAlt} className="max-h-14 w-auto object-contain" />
+            <img
+              src={cardPalette(cardBgSolid(card)).logoSrc}
+              alt={logoAlt}
+              className="max-h-14 w-auto object-contain"
+            />
           )}
         </div>
 

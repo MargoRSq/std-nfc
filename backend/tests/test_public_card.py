@@ -190,3 +190,12 @@ async def test_feedback_endpoint_204_for_valid(client: AsyncClient, session_make
         json={"name": "Иван", "contact": "test@x.com", "message": "Добрый день"},
     )
     assert r.status_code == 204
+
+
+def test_palette_picks_logo_by_background_lightness():
+    """Брендовый логотип одноцветный: на светлом фоне нужен тёмный вариант,
+    иначе белый лого сливается с подложкой карточки."""
+    from std_cards.core.color import contrast_palette
+
+    assert contrast_palette("#1F1E5E")["logo_src"] == "/std-logo-full.png"
+    assert contrast_palette("#FFFFFF")["logo_src"] == "/std-logo-full-dark.png"

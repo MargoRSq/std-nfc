@@ -429,7 +429,7 @@
               <img src="/api/media/{{ card.logo_key }}" alt="{{ t.logo_alt }}">
             </div>
           {% else %}
-            <img src="/std-logo-full.png" alt="{{ t.logo_alt }}" class="std-brand-logo">
+            <img src="{{ palette.logo_src or '/std-logo-full.png' }}" alt="{{ t.logo_alt }}" class="std-brand-logo">
           {% endif %}
         </div>
 

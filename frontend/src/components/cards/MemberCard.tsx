@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CustomField } from "@/components/cards/CustomFieldsEditor";
-import { CARD_T, formatDate } from "@/lib/i18n/cardTranslations";
+import { CARD_T, cardPalette, formatDate } from "@/lib/i18n/cardTranslations";
 import {
   isMessengerType,
   messengerHref,
@@ -241,7 +241,7 @@ export function MemberCard({ data }: Props) {
                 // Брендовый логотип белый — подложка bg-white делала его невидимым.
                 // Публичная карточка (card.html) рендерит его прямо на фоне, повторяем.
                 <img
-                  src="/std-logo-full.png"
+                  src={cardPalette(bgSolidOf(data)).logoSrc}
                   alt={t.logo_alt}
                   className="h-14 max-w-full object-contain"
                 />

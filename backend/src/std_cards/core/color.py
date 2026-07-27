@@ -34,6 +34,9 @@ def contrast_palette(bg_hex: str) -> dict[str, str]:
             "placeholder_stroke": "rgba(2,6,23,0.45)",
             "pill_value": "#1F1E5E",
             "pill_label": "#727272",
+            # Брендовый логотип одноцветный: на светлом фоне нужен тёмный вариант,
+            # иначе белый лого сливается с подложкой.
+            "logo_src": "/std-logo-full-dark.png",
         }
     return {
         "text": "#FFFFFF",
@@ -43,4 +46,5 @@ def contrast_palette(bg_hex: str) -> dict[str, str]:
         "placeholder_stroke": "rgba(255,255,255,0.6)",
         "pill_value": "#1F1E5E",
         "pill_label": "#727272",
+        "logo_src": "/std-logo-full.png",
     }

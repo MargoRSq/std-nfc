@@ -8,7 +8,7 @@ import type {
 import { formatDateRu, yearOf } from "@/lib/cards/format";
 import { formatPhoneRu } from "@/lib/cards/formatPhone";
 import { buildFieldRenderOrder } from "@/components/cards/cardFields";
-import { CARD_T } from "@/lib/i18n/cardTranslations";
+import { CARD_T, cardPalette } from "@/lib/i18n/cardTranslations";
 import {
   isMessengerType,
   messengerHref,
@@ -37,6 +37,13 @@ function gradientCss(g: BackgroundGradient, mode: "card" | "avatar"): string {
     return `linear-gradient(180deg, ${from} 0%, ${to} 100%)`;
   }
   return `linear-gradient(${g.angle ?? 135}deg, ${g.from}, ${g.to})`;
+}
+
+function bgSolidOf(payload: CardCreateRequest): string {
+  if (payload.bg_kind === "gradient" && payload.bg_gradient) {
+    return payload.bg_gradient.from || FALLBACK_BG;
+  }
+  return payload.bg_color || FALLBACK_BG;
 }
 
 function headerBg(payload: CardCreateRequest): string {
@@ -361,7 +368,7 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
             // Брендовый логотип белый — подложка bg-white делала его невидимым.
             // Публичная карточка (card.html) рендерит его прямо на фоне, повторяем.
             <img
-              src="/std-logo-full.png"
+              src={cardPalette(bgSolidOf(payload)).logoSrc}
               alt="Логотип"
               className="h-14 max-w-full object-contain"
             />

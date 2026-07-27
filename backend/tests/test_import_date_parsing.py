@@ -61,3 +61,16 @@ def test_coerce_year_treats_placeholders_as_empty():
 def test_coerce_year_rejects_garbage(raw):
     with pytest.raises(ValueError, match="Год исключения"):
         coerce_year(raw, field="Год исключения")
+
+
+def test_row_to_card_create_sets_default_logo():
+    """Импорт идёт мимо card_service, поэтому дефолтный логотип проставляет сам —
+    иначе у импортированных карточек logo_key пустой."""
+    from std_cards.logo_presets import default_logo_key
+    from std_cards.services.import_service import ImportService
+
+    svc = ImportService.__new__(ImportService)
+    card = svc._row_to_card_create(("Иванов", "Иван", "Иванович", "MBR-1"), template=None)
+
+    assert card.logo_key == default_logo_key()
+    assert card.logo_shape == "square"

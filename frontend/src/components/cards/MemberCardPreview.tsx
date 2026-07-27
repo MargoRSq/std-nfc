@@ -358,9 +358,13 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
               <img src={logo.src} alt="Логотип" className="h-full w-auto max-w-full object-contain" />
             </div>
           ) : (
-            <div className="inline-flex h-14 items-center justify-center overflow-hidden rounded-[8px] bg-white px-3 py-[6px]">
-              <img src="/std-logo-full.png" alt="Логотип" className="h-full w-auto object-contain" />
-            </div>
+            // Брендовый логотип белый — подложка bg-white делала его невидимым.
+            // Публичная карточка (card.html) рендерит его прямо на фоне, повторяем.
+            <img
+              src="/std-logo-full.png"
+              alt="Логотип"
+              className="h-14 max-w-full object-contain"
+            />
           )}
         </div>
 

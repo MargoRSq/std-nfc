@@ -238,13 +238,13 @@ export function MemberCard({ data }: Props) {
                   />
                 </div>
               ) : (
-                <div className="inline-flex h-14 items-center justify-center overflow-hidden rounded-[8px] bg-white px-3 py-[6px]">
-                  <img
-                    src="/std-logo-full.png"
-                    alt={t.logo_alt}
-                    className="h-full w-auto object-contain"
-                  />
-                </div>
+                // Брендовый логотип белый — подложка bg-white делала его невидимым.
+                // Публичная карточка (card.html) рендерит его прямо на фоне, повторяем.
+                <img
+                  src="/std-logo-full.png"
+                  alt={t.logo_alt}
+                  className="h-14 max-w-full object-contain"
+                />
               )}
             </div>
             <div className="text-[22px] font-semibold leading-[1.15] tracking-[-0.01em] text-white">

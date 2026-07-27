@@ -17,19 +17,19 @@ from std_cards.db.session import get_session_maker
 
 logger = logging.getLogger(__name__)
 
-STATEMENTS = (
-    "TRUNCATE TABLE scan_events",
-    "TRUNCATE TABLE scan_aggregates_daily",
-    "UPDATE cards SET last_opened_at = NULL WHERE last_opened_at IS NOT NULL",
-)
+TRUNCATES = ("scan_events", "scan_aggregates_daily")
 
 
 async def reset_analytics() -> None:
     sm = get_session_maker()
     async with sm.session() as conn:
-        for statement in STATEMENTS:
-            result = await conn.execute(sa.text(statement))
-            logger.info("%s → %s rows", statement, result.rowcount)
+        for table in TRUNCATES:
+            await conn.execute(sa.text(f"TRUNCATE TABLE {table}"))
+            logger.info("%s очищена", table)
+        result = await conn.execute(
+            sa.text("UPDATE cards SET last_opened_at = NULL WHERE last_opened_at IS NOT NULL")
+        )
+        logger.info("last_opened_at сброшен у %s карточек", result.rowcount)
 
 
 def main() -> None:

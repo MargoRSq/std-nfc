@@ -99,6 +99,12 @@ def _norm(value) -> str:
 
 _DATE_PATTERNS = ("%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y.%m.%d", "%d.%m.%y")
 _YEAR_RE = re.compile(r"^\D{0,4}(\d{4})\D{0,4}$")
+# Явные «пустышки» в выгрузках заказчика — это отсутствие значения, а не ошибка строки.
+_EMPTY_MARKERS = {"-", "--", "—", "–", "нет", "н/д", "нд", "не указано", "не указан", "?", "null"}
+
+
+def _is_empty_marker(text: str) -> bool:
+    return text.strip().lower().rstrip(".") in _EMPTY_MARKERS
 
 
 def coerce_date(value, *, field: str) -> date | None:
@@ -122,6 +128,8 @@ def coerce_date(value, *, field: str) -> date | None:
         raise ValueError(f"{field}: не удалось распознать дату «{value}»")
 
     text = str(value).strip()
+    if _is_empty_marker(text):
+        return None
     for pattern in _DATE_PATTERNS:
         try:
             return datetime.strptime(text, pattern).date()
@@ -144,7 +152,10 @@ def coerce_year(value, *, field: str) -> int | None:
     if isinstance(value, int | float) and not isinstance(value, bool):
         year = int(value)
     else:
-        match = _YEAR_RE.match(str(value).strip())
+        text = str(value).strip()
+        if _is_empty_marker(text):
+            return None
+        match = _YEAR_RE.match(text)
         if match is None:
             raise ValueError(f"{field}: не удалось распознать год «{value}»")
         year = int(match.group(1))

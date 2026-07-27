@@ -8,11 +8,11 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
 from std_cards.api.deps import (
-    AdminDep,
     CardMessageRepoDep,
     CardServiceDep,
     FeedbackRepoDep,
     ScanServiceDep,
+    ViewerDep,
 )
 from std_cards.config import settings
 from std_cards.core.color import contrast_palette
@@ -351,7 +351,7 @@ class FeedbackList(BaseModel):
 @router.get("/api/cards/{id}/feedback")
 async def list_card_feedback(
     id: str,
-    _user: AdminDep,
+    _user: ViewerDep,
     feedback_repo: FeedbackRepoDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),

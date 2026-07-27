@@ -16,16 +16,23 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { adminsApi, type Admin, type InviteRequest } from "@/lib/api/admins";
+import { adminsApi, type Admin, type AdminRole, type InviteRequest } from "@/lib/api/admins";
 import { cardsApi, type Category } from "@/lib/api/cards";
 import { useDebounce } from "@/hooks/useDebounce";
 
 const ADMINS_PAGE_SIZE = 10;
 
-type PermissionScope = "all" | "group" | "card";
+type PermissionScope = "all" | "group" | "card" | "viewer";
+
+// «Наблюдатель» — отдельная роль viewer: видит всё, не меняет ничего.
+function roleForScope(scope: PermissionScope): AdminRole {
+  if (scope === "viewer") return "viewer";
+  return scope === "all" ? "super_admin" : "admin";
+}
 
 function getPermissionLabel(admin: Admin): string {
   if (admin.role === "super_admin") return "Все карточки";
+  if (admin.role === "viewer") return "Только просмотр";
   if (admin.allowed_categories && admin.allowed_categories.length > 0) return "Группа";
   return "—";
 }
@@ -54,14 +61,14 @@ function buildPageNumbers(current: number, total: number): (number | "...")[] {
 const inviteSchema = z.object({
   email: z.string().email("Некорректный email"),
   name: z.string().optional(),
-  scope: z.enum(["all", "group", "card"] as const),
+  scope: z.enum(["all", "group", "card", "viewer"] as const),
   category_ids: z.array(z.number()).optional(),
 });
 
 type InviteFormData = z.infer<typeof inviteSchema>;
 
 const editPermissionsSchema = z.object({
-  scope: z.enum(["all", "group", "card"] as const),
+  scope: z.enum(["all", "group", "card", "viewer"] as const),
   category_ids: z.array(z.number()).optional(),
 });
 
@@ -84,11 +91,12 @@ function PermissionScopeSelector({
     { value: "all", label: "Все карточки", description: "Полный доступ ко всем карточкам" },
     { value: "group", label: "Группа", description: "Доступ к выбранным категориям" },
     { value: "card", label: "Карточка", description: "Доступ к конкретным карточкам" },
+    { value: "viewer", label: "Только просмотр", description: "Видит всё, изменять не может" },
   ];
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -192,7 +200,7 @@ export function AdminsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { role: "admin" | "super_admin"; category_ids?: number[] } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { role: AdminRole; category_ids?: number[] } }) =>
       adminsApi.update(id, data),
     onSuccess: () => {
       toast.success("Права обновлены");
@@ -246,7 +254,7 @@ export function AdminsPage() {
   });
 
   function handleInviteSubmit(d: InviteFormData) {
-    const role: "admin" | "super_admin" = inviteScope === "all" ? "super_admin" : "admin";
+    const role = roleForScope(inviteScope);
     const category_ids = inviteScope === "group" ? inviteCategoryIds : undefined;
     inviteMutation.mutate({ email: d.email, name: d.name || undefined, role, category_ids });
   }
@@ -254,6 +262,7 @@ export function AdminsPage() {
   function openEditModal(admin: Admin) {
     setEditTarget(admin);
     const scope: PermissionScope =
+      admin.role === "viewer" ? "viewer" :
       admin.role === "super_admin" ? "all" :
       admin.allowed_categories && admin.allowed_categories.length > 0 ? "group" : "card";
     setEditScope(scope);
@@ -263,7 +272,7 @@ export function AdminsPage() {
 
   function handleEditSubmit() {
     if (!editTarget) return;
-    const role: "admin" | "super_admin" = editScope === "all" ? "super_admin" : "admin";
+    const role = roleForScope(editScope);
     const category_ids = editScope === "group" ? editCategoryIds : undefined;
     updateMutation.mutate({ id: editTarget.id, data: { role, category_ids } });
   }

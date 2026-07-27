@@ -523,7 +523,7 @@ export function ImportPage() {
 
   function handleExportAll() {
     cardsApi
-      .exportAll()
+      .export()
       .then((r) => {
         const url = URL.createObjectURL(r.data as Blob);
         const a = document.createElement("a");

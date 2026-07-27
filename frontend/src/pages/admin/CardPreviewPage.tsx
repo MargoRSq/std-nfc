@@ -8,6 +8,7 @@ import { cardsApi } from "@/lib/api/cards";
 import { cardMessagesApi } from "@/lib/api/cardMessages";
 import type { Card, CardCreateRequest } from "@/lib/api/cards";
 import { CARD_T } from "@/lib/i18n/cardTranslations";
+import { useAuthStore } from "@/stores/authStore";
 
 function cardToPayload(card: Card): CardCreateRequest & { photo_key?: string | null } {
   return {
@@ -65,6 +66,7 @@ function InvalidCardViewWithMessage({ card, t }: { card: Card; t: Record<string,
 export function CardPreviewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const canEdit = useAuthStore((s) => s.user?.role) !== "viewer";
   const t = CARD_T;
 
   const { data: card, isLoading } = useQuery({
@@ -97,15 +99,17 @@ export function CardPreviewPage() {
         <div />
 
         <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/admin/cards/${card.id}/edit`)}
-            className="rounded-full"
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Редактировать
-          </Button>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/admin/cards/${card.id}/edit`)}
+              className="rounded-full"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Редактировать
+            </Button>
+          )}
         </div>
       </div>
 

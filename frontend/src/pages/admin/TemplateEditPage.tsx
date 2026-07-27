@@ -257,7 +257,7 @@ export function TemplateEditPage() {
             <div className="flex flex-col gap-4">
               <div>
                 <label className="text-sm font-medium text-std-muted-fg mb-1.5 block">
-                  Председатель союза театральных деятелей
+                  Председатель Союза театральных деятелей
                 </label>
                 <Input
                   value={chairman}

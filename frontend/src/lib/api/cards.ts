@@ -46,6 +46,8 @@ export interface Card {
   region?: string | null;
   card_issue_date?: string | null;
   join_date?: string | null;
+  exclusion_year?: number | null;
+  death_date?: string | null;
   chairman?: string | null;
   photo_key?: string | null;
   photo_shape: "square" | "circle";
@@ -106,6 +108,8 @@ export interface CardCreateRequest {
   region?: string;
   card_issue_date?: string;
   join_date?: string;
+  exclusion_year?: number | null;
+  death_date?: string | null;
   chairman?: string;
   photo_shape?: "square" | "circle";
   logo_shape?: "square" | "circle" | "rectangle";
@@ -139,17 +143,22 @@ export interface CardsListResponse {
 
 export type DateField = "added" | "opened" | "modified" | "created" | "issued";
 
-export interface CardsListParams {
-  page?: number;
-  page_size?: number;
+export interface CardsFilterParams {
   q?: string;
   category_id?: number;
   region?: string;
   is_active?: boolean;
-  sort?: string;
   date_field?: DateField;
   date_from?: string;
   date_to?: string;
+  age_from?: number;
+  age_to?: number;
+}
+
+export interface CardsListParams extends CardsFilterParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
 }
 
 export const cardsApi = {
@@ -171,6 +180,6 @@ export const cardsApi = {
   applyTemplate: (id: string, templateId: string) =>
     apiClient.post<Card>(`/cards/${id}/apply-template`, { template_id: templateId }),
   getCategories: () => apiClient.get<Category[]>("/categories/"),
-  exportAll: () =>
-    apiClient.get<Blob>("/cards/export.xlsx", { responseType: "blob" }),
+  export: (params: CardsFilterParams = {}) =>
+    apiClient.get<Blob>("/cards/export.xlsx", { params, responseType: "blob" }),
 };

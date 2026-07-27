@@ -36,7 +36,7 @@ export const SYSTEM_LABEL_PRESETS: SystemLabelPreset[] = [
   { id: "system:join_date", name: "Член СТД с", type: "date", is_system: true },
   {
     id: "system:chairman",
-    name: "Председатель союза театральных деятелей Российской Федерации",
+    name: "Председатель Союза театральных деятелей Российской Федерации",
     type: "text",
     is_system: true,
   },

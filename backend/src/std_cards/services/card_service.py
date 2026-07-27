@@ -19,7 +19,7 @@ from std_cards.infrastructure.repositories.category_repo import CategoryReposito
 from std_cards.infrastructure.repositories.db_models import admin_card_groups, cards
 from std_cards.infrastructure.repositories.template_repo import TemplateRepository
 from std_cards.logo_presets import default_logo_key
-from std_cards.models.auth import UserDB, UserRole
+from std_cards.models.auth import GLOBAL_READ_ROLES, UserDB, UserRole
 from std_cards.models.card import (
     BackgroundGradient,
     CardCreate,
@@ -111,7 +111,7 @@ def compute_template_overrides(
 
 
 async def build_acl_filter(user: UserDB, group_repo: AdminCardGroupRepository):
-    if user.role == UserRole.SUPER_ADMIN:
+    if user.role in GLOBAL_READ_ROLES:
         return None
     cats = await group_repo.categories_for_user(user.id)
     if not cats:
@@ -310,12 +310,18 @@ class CardService:
             return True
         return existing.id == exclude_id
 
-    async def export_all_xlsx(self) -> tuple[bytes, int]:
-        """Build full xlsx export of all (non-deleted) cards.
+    async def export_xlsx(
+        self,
+        filter: CardsListFilter | None = None,
+        current_user: UserDB | None = None,
+    ) -> tuple[bytes, int]:
+        """Build xlsx export of cards matching `filter`.
 
         Returns (file_bytes, row_count). Uses openpyxl write-only workbook to
         keep memory usage low for large datasets (50K rows ~ tens of MB peak).
+        Без фильтра выгружаются все неудалённые карточки в пределах ACL.
         """
+        acl_filter = await self._acl(current_user) if current_user else None
         cat_list = await self.categories.list_all()
         category_names = {c.id: c.name_ru for c in cat_list}
 
@@ -341,6 +347,8 @@ class CardService:
             "Дата рождения",
             "Дата выдачи",
             "Дата вступления",
+            "Год исключения из СТД",
+            "Дата смерти",
             "Председатель",
             "Создано",
             "Активна",
@@ -348,7 +356,9 @@ class CardService:
         ws.append(headers)
 
         row_count = 0
-        async for r in self.cards.iter_all_for_export(batch_size=500):
+        async for r in self.cards.iter_all_for_export(
+            filter=filter, acl_filter=acl_filter, batch_size=500
+        ):
             slug = r["public_slug"]
             public_url = f"{base_url}/c/{slug}" if base_url else f"/c/{slug}"
             ws.append(
@@ -366,6 +376,8 @@ class CardService:
                     r["birth_date"].isoformat() if r["birth_date"] else "",
                     r["card_issue_date"].isoformat() if r["card_issue_date"] else "",
                     r["join_date"].isoformat() if r["join_date"] else "",
+                    r["exclusion_year"] or "",
+                    r["death_date"].isoformat() if r["death_date"] else "",
                     r["chairman"] or "",
                     r["created_at"].isoformat() if r["created_at"] else "",
                     "да" if r["is_active"] else "нет",

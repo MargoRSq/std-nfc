@@ -1,5 +1,7 @@
 import io
 import logging
+import re
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
 import openpyxl
@@ -31,6 +33,8 @@ EXPECTED_HEADERS = [
     "region",
     "card_issue_date",
     "join_date",
+    "exclusion_year",
+    "death_date",
     "chairman",
     "photo_url",
 ]
@@ -45,6 +49,8 @@ RU_HEADERS = [
     "Регион",
     "Дата выдачи билета",
     "Дата вступления",
+    "Год исключения из СТД",
+    "Дата смерти",
     "Председатель",
     "Ссылка на фото",
 ]
@@ -69,6 +75,8 @@ HEADER_ALIASES: dict[str, set[str]] = {
         "дата выдачи билета",
     },
     "join_date": {"join_date", "дата вступления", "член стд с"},
+    "exclusion_year": {"exclusion_year", "год исключения", "год исключения из стд"},
+    "death_date": {"death_date", "дата смерти"},
     "chairman": {"chairman", "председатель"},
     "photo_url": {
         "photo_url",
@@ -87,6 +95,62 @@ def _norm(value) -> str:
     if value is None:
         return ""
     return str(value).strip().lower()
+
+
+_DATE_PATTERNS = ("%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y.%m.%d", "%d.%m.%y")
+_YEAR_RE = re.compile(r"^\D{0,4}(\d{4})\D{0,4}$")
+
+
+def coerce_date(value, *, field: str) -> date | None:
+    """Excel-ячейка → date.
+
+    Принимаем datetime/date, «дд.мм.гггг», ISO, «мм/дд» варианты и голый год
+    («2025», «с 2025» → 01.01.2025 — в файлах СТД «Дата вступления» приходит
+    годом). Непонятное значение — ошибка строки, а не тихий None: раньше
+    год-числом молча терялся и 277 карточек уехали без даты вступления.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        year = int(value)
+        if 1900 <= year <= 2200:
+            return date(year, 1, 1)
+        raise ValueError(f"{field}: не удалось распознать дату «{value}»")
+
+    text = str(value).strip()
+    for pattern in _DATE_PATTERNS:
+        try:
+            return datetime.strptime(text, pattern).date()
+        except ValueError:
+            continue
+    match = _YEAR_RE.match(text)
+    if match:
+        year = int(match.group(1))
+        if 1900 <= year <= 2200:
+            return date(year, 1, 1)
+    raise ValueError(f"{field}: не удалось распознать дату «{text}»")
+
+
+def coerce_year(value, *, field: str) -> int | None:
+    """Excel-ячейка → год (int). Принимаем «2025», 2025, «с 2025», дату."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, datetime | date):
+        return value.year
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        year = int(value)
+    else:
+        match = _YEAR_RE.match(str(value).strip())
+        if match is None:
+            raise ValueError(f"{field}: не удалось распознать год «{value}»")
+        year = int(match.group(1))
+    if not 1900 <= year <= 2200:
+        raise ValueError(f"{field}: год «{year}» вне диапазона 1900–2200")
+    return year
 
 
 def _photo_url_from_row(row: tuple, col_index: dict[str, int] | None) -> str | None:
@@ -307,9 +371,11 @@ class ImportService:
             region = cell("region")
             card_issue_date = cell("card_issue_date")
             join_date = cell("join_date")
+            exclusion_year = cell("exclusion_year")
+            death_date = cell("death_date")
             chairman = cell("chairman")
         else:
-            padded = row + (None,) * (9 - len(row))
+            padded = row + (None,) * (11 - len(row))
             (
                 last_name,
                 first_name,
@@ -319,8 +385,10 @@ class ImportService:
                 region,
                 card_issue_date,
                 join_date,
+                exclusion_year,
+                death_date,
                 chairman,
-            ) = padded[:9]
+            ) = padded[:11]
         if not last_name or not first_name or not membership_no:
             raise ValueError("Missing required fields: last_name/first_name/membership_no")
 
@@ -363,10 +431,12 @@ class ImportService:
             membership_no=str(membership_no).strip(),
             category_id=category_id,
             template_id=template_id,
-            birth_date=birth_date if hasattr(birth_date, "isoformat") else None,
+            birth_date=coerce_date(birth_date, field="Дата рождения"),
             region=str(region).strip() if region else None,
-            card_issue_date=card_issue_date if hasattr(card_issue_date, "isoformat") else None,
-            join_date=join_date if hasattr(join_date, "isoformat") else None,
+            card_issue_date=coerce_date(card_issue_date, field="Дата выдачи билета"),
+            join_date=coerce_date(join_date, field="Дата вступления"),
+            exclusion_year=coerce_year(exclusion_year, field="Год исключения из СТД"),
+            death_date=coerce_date(death_date, field="Дата смерти"),
             chairman=str(chairman).strip()
             if chairman
             else (str(default_chairman).strip() if default_chairman else None),

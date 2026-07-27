@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 import sqlalchemy as sa
@@ -50,6 +51,43 @@ _LIST_COLS = [
     cards.c.template_id,
     cards.c.created_at,
 ]
+
+
+def _shift_years(d: date, years: int) -> date:
+    """d минус `years` лет; 29 февраля в невисокосном году → 28 февраля."""
+    try:
+        return d.replace(year=d.year - years)
+    except ValueError:
+        return d.replace(year=d.year - years, day=28)
+
+
+def build_card_filters(filter: CardsListFilter, acl_filter=None) -> list:
+    """Условия WHERE, общие для списка карточек и выгрузки в Excel."""
+    where = [cards.c.deleted_at.is_(None)]
+
+    if filter.q:
+        where.append(
+            cards.c.full_name_search.contains(sa.func.immutable_unaccent(sa.func.lower(filter.q)))
+        )
+    if filter.category_id is not None:
+        where.append(cards.c.category_id == filter.category_id)
+    if filter.region is not None:
+        where.append(cards.c.region == filter.region)
+    date_col = _DATE_FIELD_MAP.get(filter.date_field or "issued", cards.c.card_issue_date)
+    if filter.date_from is not None:
+        where.append(date_col >= filter.date_from)
+    if filter.date_to is not None:
+        where.append(date_col <= filter.date_to)
+    today = date.today()
+    if filter.age_from is not None:
+        where.append(cards.c.birth_date <= _shift_years(today, filter.age_from))
+    if filter.age_to is not None:
+        where.append(cards.c.birth_date > _shift_years(today, filter.age_to + 1))
+    if filter.is_active is not None:
+        where.append(cards.c.is_active == filter.is_active)
+    if acl_filter is not None:
+        where.append(acl_filter)
+    return where
 
 
 class CardRepository(BaseRepository):
@@ -125,27 +163,7 @@ class CardRepository(BaseRepository):
         acl_filter=None,
         conn: AsyncConnection | None = None,
     ) -> tuple[list[CardListItem], int]:
-        base_where = [cards.c.deleted_at.is_(None)]
-
-        if filter.q:
-            base_where.append(
-                cards.c.full_name_search.contains(
-                    sa.func.immutable_unaccent(sa.func.lower(filter.q))
-                )
-            )
-        if filter.category_id is not None:
-            base_where.append(cards.c.category_id == filter.category_id)
-        if filter.region is not None:
-            base_where.append(cards.c.region == filter.region)
-        date_col = _DATE_FIELD_MAP.get(filter.date_field or "issued", cards.c.card_issue_date)
-        if filter.date_from is not None:
-            base_where.append(date_col >= filter.date_from)
-        if filter.date_to is not None:
-            base_where.append(date_col <= filter.date_to)
-        if filter.is_active is not None:
-            base_where.append(cards.c.is_active == filter.is_active)
-        if acl_filter is not None:
-            base_where.append(acl_filter)
+        base_where = build_card_filters(filter, acl_filter)
 
         count_q = sa.select(sa.func.count()).select_from(cards).where(sa.and_(*base_where))
         count_result = await self.ctx_wrap(count_q, conn)
@@ -311,6 +329,8 @@ class CardRepository(BaseRepository):
     async def iter_all_for_export(
         self,
         *,
+        filter: CardsListFilter | None = None,
+        acl_filter=None,
         batch_size: int = 500,
         conn: AsyncConnection | None = None,
     ):
@@ -318,7 +338,8 @@ class CardRepository(BaseRepository):
 
         Returns dicts with all columns needed by the export view, ordered by
         created_at ASC for stable, resumable iteration. Soft-deleted rows are
-        skipped.
+        skipped. `filter` — те же условия, что и в списке карточек, чтобы
+        выгрузка соответствовала выбранной категории/поиску/датам.
         """
         cols = [
             cards.c.id,
@@ -332,16 +353,23 @@ class CardRepository(BaseRepository):
             cards.c.birth_date,
             cards.c.card_issue_date,
             cards.c.join_date,
+            cards.c.exclusion_year,
+            cards.c.death_date,
             cards.c.chairman,
             cards.c.is_active,
             cards.c.created_at,
         ]
+        base_where = (
+            build_card_filters(filter, acl_filter)
+            if filter is not None
+            else [cards.c.deleted_at.is_(None)] + ([acl_filter] if acl_filter is not None else [])
+        )
         last_created_at = None
         last_id = None
         while True:
             q = (
                 sa.select(*cols)
-                .where(cards.c.deleted_at.is_(None))
+                .where(sa.and_(*base_where))
                 .order_by(cards.c.created_at.asc(), cards.c.id.asc())
                 .limit(batch_size)
             )

@@ -196,7 +196,12 @@ def _draw_text_block(
 
     cur_y += 16
     sub_font = _font(22, "Regular")
-    d.text((text_x, cur_y), "Член союза театральных деятелей", font=sub_font, fill=text_color_muted)
+    d.text(
+        (text_x, cur_y),
+        "Член Союза театральных деятелей Российской Федерации",
+        font=sub_font,
+        fill=text_color_muted,
+    )
 
     footer_font = _font(20, "Regular")
     footer_text = "stdrf.ru"

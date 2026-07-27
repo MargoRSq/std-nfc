@@ -17,11 +17,12 @@ import { CardActionMenu } from "@/components/cards/CardActionMenu";
 import { AssignTemplateDialog } from "@/components/cards/AssignTemplateDialog";
 import { PublishMessageModal } from "@/components/cards/PublishMessageModal";
 import { DateFilterDropdown, type DateFilterValue } from "@/components/cards/DateFilterDropdown";
+import { AgeFilterDropdown, type AgeFilterValue } from "@/components/cards/AgeFilterDropdown";
 import { SortDropdown, sortParamFor, orderFromSortParam, type SortOrder } from "@/components/cards/SortDropdown";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cardsApi, type CardListItem, type Category } from "@/lib/api/cards";
+import { cardsApi, type CardListItem, type CardsFilterParams, type Category } from "@/lib/api/cards";
 import { templatesApi, type Template } from "@/lib/api/templates";
 import { importsApi } from "@/lib/api/imports";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -157,6 +158,11 @@ export function CardsListPage() {
   const dateFieldParam = searchParams.get("date_field");
   const dateFromParam = searchParams.get("date_from") ?? "";
   const dateToParam = searchParams.get("date_to") ?? "";
+  const ageFromParam = searchParams.get("age_from") ?? "";
+  const ageToParam = searchParams.get("age_to") ?? "";
+  const ageFilter: AgeFilterValue | null =
+    ageFromParam || ageToParam ? { from: ageFromParam, to: ageToParam } : null;
+
   const dateFilter: DateFilterValue | null =
     dateFieldParam && (dateFromParam || dateToParam)
       ? {
@@ -235,6 +241,16 @@ export function CardsListPage() {
 
   const categoryMap = categories ? buildCategoryMap(categories) : new Map<number, Category>();
 
+  const filterParams: CardsFilterParams = {
+    q: debouncedSearch || undefined,
+    category_id: categoryIdFilter,
+    date_field: dateFilter?.field,
+    date_from: dateFilter?.from || undefined,
+    date_to: dateFilter?.to || undefined,
+    age_from: ageFilter?.from ? Number(ageFilter.from) : undefined,
+    age_to: ageFilter?.to ? Number(ageFilter.to) : undefined,
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: [
       "cards",
@@ -246,18 +262,16 @@ export function CardsListPage() {
       dateFilter?.field,
       dateFilter?.from,
       dateFilter?.to,
+      ageFilter?.from,
+      ageFilter?.to,
     ],
     queryFn: () =>
       cardsApi
         .list({
-          q: debouncedSearch || undefined,
+          ...filterParams,
           page,
           page_size: pageSize,
-          category_id: categoryIdFilter,
           sort: sortParam || undefined,
-          date_field: dateFilter?.field,
-          date_from: dateFilter?.from || undefined,
-          date_to: dateFilter?.to || undefined,
         })
         .then((r) => r.data),
   });
@@ -285,14 +299,14 @@ export function CardsListPage() {
   }
 
   const userRole = useAuthStore((s) => s.user?.role);
-  const isSuperAdmin = userRole === "super_admin";
+  const canEdit = userRole !== "viewer";
   const [exporting, setExporting] = useState(false);
 
   function handleExportAll() {
     if (exporting) return;
     setExporting(true);
     cardsApi
-      .exportAll()
+      .export(filterParams)
       .then((r) => {
         const url = URL.createObjectURL(r.data as Blob);
         const a = document.createElement("a");
@@ -318,6 +332,19 @@ export function CardsListPage() {
       </button>
     );
   }
+
+  const actionsColumn: ColumnDef<CardListItem> = {
+    id: "actions",
+    header: () => <span className="text-std-muted-fg">Действия</span>,
+    cell: ({ row }) => (
+      <CardActionMenu
+        card={row.original}
+        onDelete={(id) => setDeleteTarget(id)}
+        onPublishMessage={(id) => setPublishTarget(id)}
+        onAssignTemplate={(id) => setAssignTemplateTarget(id)}
+      />
+    ),
+  };
 
   const columns: ColumnDef<CardListItem>[] = [
     {
@@ -408,18 +435,7 @@ export function CardsListPage() {
         );
       },
     },
-    {
-      id: "actions",
-      header: () => <span className="text-std-muted-fg">Действия</span>,
-      cell: ({ row }) => (
-        <CardActionMenu
-          card={row.original}
-          onDelete={(id) => setDeleteTarget(id)}
-          onPublishMessage={(id) => setPublishTarget(id)}
-          onAssignTemplate={(id) => setAssignTemplateTarget(id)}
-        />
-      ),
-    },
+    ...(canEdit ? [actionsColumn] : []),
   ];
 
   const table = useReactTable({
@@ -520,7 +536,7 @@ export function CardsListPage() {
     <div className="space-y-4">
       <h1 className="sr-only">Карточки членов СТД</h1>
       {/* Массовая загрузка */}
-      <div className="hidden md:flex items-center justify-between gap-4">
+      <div className={cn("hidden items-center justify-between gap-4", canEdit && "md:flex")}>
         <div>
           <span className="text-base font-semibold text-std-ink-strong">Массовая загрузка</span>
         </div>
@@ -544,7 +560,8 @@ export function CardsListPage() {
         </div>
       </div>
 
-      {/* Шаблоны */}
+      {/* Шаблоны — раздел редактирования, наблюдателю не показываем */}
+      {canEdit && (
       <div>
         <div className="flex items-center justify-between mb-3 gap-3">
           <button
@@ -565,10 +582,12 @@ export function CardsListPage() {
                 onClick={() => navigate("/admin/templates")}
               />
             </div>
-            <Button onClick={() => navigate("/admin/templates?create=1")}>
-              Добавить
-              <Plus className="ml-2 h-4 w-4" />
-            </Button>
+            {canEdit && (
+              <Button onClick={() => navigate("/admin/templates?create=1")}>
+                Добавить
+                <Plus className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -586,21 +605,20 @@ export function CardsListPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Члены СТД heading + Excel export */}
       <div className="flex items-center justify-between gap-3 mt-2">
         <h2 className="text-lg font-semibold text-std-ink-strong">Члены СТД</h2>
-        {isSuperAdmin && (
-          <Button
-            variant="outline"
-            onClick={handleExportAll}
-            disabled={exporting}
-            className="bg-white border-std-border text-std-ink-strong hover:bg-std-surface-2 rounded-pill hidden sm:flex"
-          >
-            {exporting ? "Готовим файл…" : "Выгрузить данные Excel"}
-            <Download className="ml-2 h-4 w-4 flex-shrink-0" />
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          onClick={handleExportAll}
+          disabled={exporting}
+          className="bg-white border-std-border text-std-ink-strong hover:bg-std-surface-2 rounded-pill hidden sm:flex"
+        >
+          {exporting ? "Готовим файл…" : "Выгрузить данные Excel"}
+          <Download className="ml-2 h-4 w-4 flex-shrink-0" />
+        </Button>
       </div>
 
       {/* Filter row: toggle | search | category | date | Добавить */}
@@ -642,6 +660,22 @@ export function CardsListPage() {
           className="rounded-pill"
         />
 
+        <AgeFilterDropdown
+          value={ageFilter}
+          onApply={(next) => {
+            setSearchParams((prev) => {
+              const params = new URLSearchParams(prev);
+              if (next?.from) params.set("age_from", next.from);
+              else params.delete("age_from");
+              if (next?.to) params.set("age_to", next.to);
+              else params.delete("age_to");
+              params.set("page", "1");
+              return params;
+            });
+          }}
+          className="rounded-pill"
+        />
+
         <DateFilterDropdown
           value={dateFilter}
           onApply={(next) => {
@@ -665,10 +699,12 @@ export function CardsListPage() {
           className="rounded-pill"
         />
 
-        <Button onClick={() => navigate("/admin/cards/new")} className="ml-auto rounded-pill">
-          Добавить
-          <Plus className="ml-2 h-4 w-4" />
-        </Button>
+        {canEdit && (
+          <Button onClick={() => navigate("/admin/cards/new")} className="ml-auto rounded-pill">
+            Добавить
+            <Plus className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {view === "grid" ? (
@@ -822,13 +858,15 @@ export function CardsListPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-semibold text-std-ink-strong text-sm truncate">{fullName}</p>
-                        <CardActionMenu
-                          card={card}
-                          onDelete={(id) => setDeleteTarget(id)}
-                          onPublishMessage={(id) => setPublishTarget(id)}
-                          onAssignTemplate={(id) => setAssignTemplateTarget(id)}
-                          triggerClassName="h-7 w-7 -mt-1 -mr-1 shrink-0"
-                        />
+                        {canEdit && (
+                          <CardActionMenu
+                            card={card}
+                            onDelete={(id) => setDeleteTarget(id)}
+                            onPublishMessage={(id) => setPublishTarget(id)}
+                            onAssignTemplate={(id) => setAssignTemplateTarget(id)}
+                            triggerClassName="h-7 w-7 -mt-1 -mr-1 shrink-0"
+                          />
+                        )}
                       </div>
                       <p className="text-xs text-std-muted-fg mt-1 truncate">
                         №{card.membership_no} с {year} г.

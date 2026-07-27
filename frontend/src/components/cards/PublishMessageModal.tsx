@@ -255,7 +255,7 @@ export function PublishMessageModal({ cardId, open, onOpenChange }: Props) {
                 card={card}
                 membershipLabel="Членский билет"
                 invalidLabel="Удостоверение недействительно"
-                contactLabel="Связаться с СТД"
+                contactLabel="Связаться с СТД РФ"
                 logoAlt="СТД"
                 messageText={text}
                 messageImageUrl={displayImageUrl}

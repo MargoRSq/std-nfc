@@ -8,6 +8,14 @@ from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 class UserRole(StrEnum):
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
+    VIEWER = "viewer"
+
+
+READ_ONLY_ROLES = frozenset({UserRole.VIEWER})
+EDITOR_ROLES = frozenset({UserRole.ADMIN, UserRole.SUPER_ADMIN})
+ALL_ROLES = frozenset(UserRole)
+# Роли, которые видят все карточки без ограничения по категориям.
+GLOBAL_READ_ROLES = frozenset({UserRole.SUPER_ADMIN, UserRole.VIEWER})
 
 
 class ConsumeResult(StrEnum):

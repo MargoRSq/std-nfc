@@ -5,7 +5,8 @@
 set -eu
 
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-PROJECT=$(CDPATH= cd -- "$DIR/../.." && pwd)
+ROOT=$(git -C "$DIR" rev-parse --show-toplevel)
+PROJECT="$ROOT/projects/std-cards"
 PLATFORM=linux/amd64
 
 echo "==> Сборка образов ($PLATFORM)"

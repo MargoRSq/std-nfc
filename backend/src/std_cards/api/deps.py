@@ -24,7 +24,7 @@ from std_cards.infrastructure.repositories import (
     TemplateRepository,
     UserRepository,
 )
-from std_cards.models.auth import UserDB, UserRole
+from std_cards.models.auth import ALL_ROLES, EDITOR_ROLES, UserDB, UserRole
 from std_cards.services.admin_service import AdminService
 from std_cards.services.auth_service import AuthService
 from std_cards.services.card_message_service import CardMessageService
@@ -90,7 +90,15 @@ async def get_current_user(
 
 
 async def require_admin(user: UserDB = Depends(get_current_user)) -> UserDB:
-    if user.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+    """Право на изменение данных: admin и super_admin. Роль viewer сюда не проходит."""
+    if user.role not in EDITOR_ROLES:
+        raise ForbiddenError()
+    return user
+
+
+async def require_viewer(user: UserDB = Depends(get_current_user)) -> UserDB:
+    """Право на чтение: любая роль, включая viewer."""
+    if user.role not in ALL_ROLES:
         raise ForbiddenError()
     return user
 
@@ -104,6 +112,7 @@ async def require_super_admin(user: UserDB = Depends(get_current_user)) -> UserD
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 CurrentUserDep = Annotated[UserDB, Depends(get_current_user)]
 AdminDep = Annotated[UserDB, Depends(require_admin)]
+ViewerDep = Annotated[UserDB, Depends(require_viewer)]
 SuperAdminDep = Annotated[UserDB, Depends(require_super_admin)]
 
 

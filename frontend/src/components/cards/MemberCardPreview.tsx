@@ -397,8 +397,16 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
           )}
         </div>
 
-        <div className="text-[18px] font-semibold leading-[1.2] text-white">
-          {fullName || "Иванов Иван Иванович"}
+        <div className="flex flex-col gap-1">
+          <div className="text-[18px] font-semibold leading-[1.2] text-white">
+            {fullName || "Иванов Иван Иванович"}
+          </div>
+          <div
+            className="text-[13px] font-medium leading-[1.3]"
+            style={{ color: "rgba(255,255,255,0.92)" }}
+          >
+            {t.membership_subtitle}
+          </div>
         </div>
       </div>
 

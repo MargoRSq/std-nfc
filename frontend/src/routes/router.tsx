@@ -8,7 +8,7 @@ import { LoginPage } from "@/pages/auth/LoginPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { TwoFactorSetupPage } from "@/pages/auth/TwoFactorSetupPage";
-import { RequireAuth, RequireSuperAdmin } from "./guards";
+import { RequireAuth, RequireEditor, RequireSuperAdmin } from "./guards";
 
 const CardsListPage = lazy(() =>
   import("@/pages/admin/CardsListPage").then((m) => ({ default: m.CardsListPage })),
@@ -80,13 +80,28 @@ export const router = createBrowserRouter([
         children: [
           { path: "/admin", element: <Navigate to="/admin/cards" replace /> },
           { path: "/admin/cards", element: lazyRoute(<CardsListPage />) },
-          { path: "/admin/cards/new", element: lazyRoute(<CardEditPage mode="create" />) },
+          {
+            path: "/admin/cards/new",
+            element: <RequireEditor>{lazyRoute(<CardEditPage mode="create" />)}</RequireEditor>,
+          },
           { path: "/admin/cards/:id", element: lazyRoute(<CardPreviewPage />) },
-          { path: "/admin/cards/:id/edit", element: lazyRoute(<CardEditPage mode="edit" />) },
+          {
+            path: "/admin/cards/:id/edit",
+            element: <RequireEditor>{lazyRoute(<CardEditPage mode="edit" />)}</RequireEditor>,
+          },
           { path: "/admin/cards/:id/analytics", element: lazyRoute(<CardAnalyticsPage />) },
-          { path: "/admin/templates", element: lazyRoute(<TemplatesPage />) },
-          { path: "/admin/templates/:id/edit", element: lazyRoute(<TemplateEditPage />) },
-          { path: "/admin/import", element: lazyRoute(<ImportPage />) },
+          {
+            path: "/admin/templates",
+            element: <RequireEditor>{lazyRoute(<TemplatesPage />)}</RequireEditor>,
+          },
+          {
+            path: "/admin/templates/:id/edit",
+            element: <RequireEditor>{lazyRoute(<TemplateEditPage />)}</RequireEditor>,
+          },
+          {
+            path: "/admin/import",
+            element: <RequireEditor>{lazyRoute(<ImportPage />)}</RequireEditor>,
+          },
           { path: "/admin/analytics", element: lazyRoute(<AnalyticsPage />) },
           { path: "/admin/account", element: lazyRoute(<AccountPage />) },
           { path: "/admin/2fa-setup", element: <TwoFactorSetupPage /> },

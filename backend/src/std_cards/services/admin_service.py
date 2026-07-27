@@ -29,7 +29,7 @@ class AdminService:
         self.categories = category_repo
 
     async def list_admins(self) -> list[AdminListItem]:
-        all_users = await self.users.list_by_roles(["admin", "super_admin"])
+        all_users = await self.users.list_by_roles([r.value for r in UserRole])
         items = []
         for user in all_users:
             cats = await self.groups.categories_for_user(user.id)

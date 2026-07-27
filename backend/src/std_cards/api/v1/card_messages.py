@@ -8,6 +8,7 @@ from std_cards.api.deps import (
     AuditRepoDep,
     CardMessageServiceDep,
     CardServiceDep,
+    ViewerDep,
 )
 from std_cards.core.uploads import read_upload_capped
 from std_cards.models.audit import AuditAction
@@ -59,7 +60,7 @@ async def publish_message(
 @router.get("")
 async def list_messages(
     card_id: UUID,
-    user: AdminDep,
+    user: ViewerDep,
     svc: CardMessageServiceDep,
     card_svc: CardServiceDep,
 ) -> list[CardMessageDB]:

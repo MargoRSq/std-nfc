@@ -16,3 +16,9 @@ export function RequireSuperAdmin({ children }: GuardProps) {
   if (user?.role !== "super_admin") return <Navigate to="/admin/cards" replace />;
   return <>{children}</>;
 }
+
+export function RequireEditor({ children }: GuardProps) {
+  const user = useAuthStore((s) => s.user);
+  if (user?.role === "viewer") return <Navigate to="/admin/cards" replace />;
+  return <>{children}</>;
+}

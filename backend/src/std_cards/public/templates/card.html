@@ -21,7 +21,7 @@
   {% set fullname = (card.last_name ~ ' ' ~ card.first_name ~ (' ' ~ card.middle_name if card.middle_name else '')) | trim %}
   <meta property="og:type" content="profile">
   <meta property="og:title" content="{{ fullname }} — СТД">
-  <meta property="og:description" content="Членский билет №{{ card.membership_no }}, член союза театральных деятелей">
+  <meta property="og:description" content="Членский билет №{{ card.membership_no }}, член Союза театральных деятелей Российской Федерации">
   <meta property="og:url" content="{{ base_url }}/c/{{ slug }}">
   <meta property="og:image" content="{{ base_url }}/c/{{ slug }}/og.png?v={{ updated_unix }}">
   <meta property="og:image:width" content="1200">

@@ -30,11 +30,12 @@ interface NavItem {
   label: string;
   icon: IconType;
   superAdminOnly?: boolean;
+  editorOnly?: boolean;
   exact?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { to: "/admin/cards/new", label: "Создать", icon: PlusIcon, exact: true },
+  { to: "/admin/cards/new", label: "Создать", icon: PlusIcon, exact: true, editorOnly: true },
   { to: "/admin/cards", label: "Карточки", icon: GridIcon },
   { to: "/admin/analytics", label: "Аналитика", icon: ChartIcon },
   { to: "/admin/admins", label: "Администраторы", icon: UsersGroupIcon, superAdminOnly: true },
@@ -42,7 +43,7 @@ const navItems: NavItem[] = [
 
 const mobileTabItems: NavItem[] = [
   { to: "/admin/cards", label: "Карточки", icon: GridIcon },
-  { to: "/admin/cards/new", label: "Создать", icon: PlusIcon, exact: true },
+  { to: "/admin/cards/new", label: "Создать", icon: PlusIcon, exact: true, editorOnly: true },
   { to: "/admin/analytics", label: "Аналитика", icon: ChartIcon },
 ];
 
@@ -132,10 +133,11 @@ export function AdminLayout() {
   const displayName = nameParts.length > 0
     ? nameParts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ")
     : "Аккаунт";
-  const visibleNav = navItems.filter(
-    (item) => !item.superAdminOnly || user?.role === "super_admin",
-  );
   const isSuperAdmin = user?.role === "super_admin";
+  const canEdit = user?.role !== "viewer";
+  const visibleNav = navItems.filter(
+    (item) => (!item.superAdminOnly || isSuperAdmin) && (!item.editorOnly || canEdit),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -190,14 +192,18 @@ export function AdminLayout() {
                   <UserCircleIcon className="mr-2 h-4 w-4" />
                   Аккаунт
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/templates")}>
-                  <LayoutTemplate className="mr-2 h-4 w-4" />
-                  Шаблоны
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/import")}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Импорт
-                </DropdownMenuItem>
+                {canEdit && (
+                  <DropdownMenuItem onClick={() => navigate("/admin/templates")}>
+                    <LayoutTemplate className="mr-2 h-4 w-4" />
+                    Шаблоны
+                  </DropdownMenuItem>
+                )}
+                {canEdit && (
+                  <DropdownMenuItem onClick={() => navigate("/admin/import")}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Импорт
+                  </DropdownMenuItem>
+                )}
                 {isSuperAdmin && (
                   <DropdownMenuItem onClick={() => navigate("/admin/admins")}>
                     <UsersGroupIcon className="mr-2 h-4 w-4" />
@@ -227,7 +233,9 @@ export function AdminLayout() {
         }}
         aria-label="Нижняя навигация"
       >
-        {mobileTabItems.map((item) => (
+        {mobileTabItems
+          .filter((item) => !item.editorOnly || canEdit)
+          .map((item) => (
           <MobileTab
             key={item.to}
             to={item.to}

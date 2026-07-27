@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
-from std_cards.api.deps import AdminDep, AnalyticsServiceDep, AuditRepoDep, CardServiceDep
+from std_cards.api.deps import AnalyticsServiceDep, AuditRepoDep, CardServiceDep, ViewerDep
 from std_cards.models.analytics import CardAnalytics, DashboardResponse, TopActiveUsersResponse
 from std_cards.models.audit import AuditAction
 from std_cards.services.analytics_report import build_card_report, build_dashboard_report
@@ -24,7 +24,7 @@ def _resolve_range(from_: date | None, to: date | None) -> tuple[datetime, datet
 
 @router.get("/api/analytics/dashboard", response_model=DashboardResponse)
 async def dashboard(
-    user: AdminDep,
+    user: ViewerDep,
     service: AnalyticsServiceDep,
     from_: date | None = Query(None, alias="from"),
     to: date | None = Query(None),
@@ -41,7 +41,7 @@ async def dashboard(
 @router.get("/api/analytics/cards/{card_id}", response_model=CardAnalytics)
 async def card_analytics(
     card_id: UUID,
-    user: AdminDep,
+    user: ViewerDep,
     service: AnalyticsServiceDep,
     from_: date | None = Query(None, alias="from"),
     to: date | None = Query(None),
@@ -57,7 +57,7 @@ async def card_analytics(
 
 @router.get("/api/analytics/top-active", response_model=TopActiveUsersResponse)
 async def top_active_users(
-    user: AdminDep,
+    user: ViewerDep,
     service: AnalyticsServiceDep,
     from_: date | None = Query(None, alias="from"),
     to: date | None = Query(None),
@@ -75,7 +75,7 @@ async def top_active_users(
 
 @router.get("/api/analytics/report.xlsx")
 async def dashboard_report(
-    user: AdminDep,
+    user: ViewerDep,
     service: AnalyticsServiceDep,
     audit: AuditRepoDep,
     from_: date | None = Query(None, alias="from"),
@@ -110,7 +110,7 @@ async def dashboard_report(
 @router.get("/api/analytics/cards/{card_id}/report.xlsx")
 async def card_report(
     card_id: UUID,
-    user: AdminDep,
+    user: ViewerDep,
     service: AnalyticsServiceDep,
     cards: CardServiceDep,
     audit: AuditRepoDep,

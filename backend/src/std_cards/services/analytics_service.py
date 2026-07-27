@@ -19,7 +19,7 @@ from std_cards.models.analytics import (
     TopActiveUsersResponse,
     TopCard,
 )
-from std_cards.models.auth import UserDB, UserRole
+from std_cards.models.auth import GLOBAL_READ_ROLES, UserDB
 from std_cards.services.card_service import build_acl_filter
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class AnalyticsService:
         acl_filter = await self._acl_for_user(user)
         scope_key = "all"
         if user is not None:
-            if user.role == UserRole.SUPER_ADMIN:
+            if user.role in GLOBAL_READ_ROLES:
                 scope_key = "super"
             else:
                 cats = await self.groups.categories_for_user(user.id) if self.groups else []

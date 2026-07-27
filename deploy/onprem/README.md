@@ -19,7 +19,7 @@ Let's Encrypt валидирует домен по HTTP. Docker ставится
 ## Установка (git clone → .env → скрипт)
 
 ```bash
-git clone <репозиторий> && cd <репозиторий>/deploy/onprem
+git clone <репозиторий> && cd <репозиторий>/projects/std-cards/deploy/onprem
 
 cp .env.example .env
 vi .env          # задать DOMAIN=<ваш домен> и ACME_EMAIL=<email для Let's Encrypt>

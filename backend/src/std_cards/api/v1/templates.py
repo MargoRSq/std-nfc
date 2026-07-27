@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
-from std_cards.api.deps import AdminDep, TemplateServiceDep
+from std_cards.api.deps import AdminDep, TemplateServiceDep, ViewerDep
 from std_cards.models.template import TemplateCreate, TemplateDB, TemplateUpdate
 
 router = APIRouter(prefix="/api/templates", tags=["templates"])
@@ -20,7 +20,7 @@ class FromCardRequest(BaseModel):
 
 @router.get("/")
 async def list_templates(
-    _user: AdminDep,
+    _user: ViewerDep,
     svc: TemplateServiceDep,
 ) -> list[TemplateDB]:
     return await svc.list_all()
@@ -38,7 +38,7 @@ async def create_template(
 @router.get("/{id}")
 async def get_template(
     id: UUID,
-    _user: AdminDep,
+    _user: ViewerDep,
     svc: TemplateServiceDep,
 ) -> TemplateDB:
     return await svc.get(id)

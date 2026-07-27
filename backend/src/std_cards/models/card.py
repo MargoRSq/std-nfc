@@ -89,6 +89,8 @@ class CardCreate(BaseModel):
     region: str | None = Field(None, max_length=200)
     card_issue_date: date | None = None
     join_date: date | None = None
+    exclusion_year: int | None = Field(None, ge=1900, le=2200)
+    death_date: date | None = None
     chairman: str | None = None
     photo_shape: Literal["square", "circle"] = "square"
     logo_shape: Literal["square", "circle", "rectangle"] = "square"
@@ -133,6 +135,8 @@ class CardUpdate(BaseModel):
     region: str | None = None
     card_issue_date: date | None = None
     join_date: date | None = None
+    exclusion_year: int | None = Field(None, ge=1900, le=2200)
+    death_date: date | None = None
     chairman: str | None = None
     photo_shape: Literal["square", "circle"] | None = None
     logo_shape: Literal["square", "circle", "rectangle"] | None = None
@@ -182,6 +186,8 @@ class CardDB(BaseModel):
     region: str | None
     card_issue_date: date | None
     join_date: date | None
+    exclusion_year: int | None = None
+    death_date: date | None = None
     chairman: str | None
     photo_key: str | None
     photo_shape: str
@@ -283,6 +289,8 @@ class CardsListFilter(BaseModel):
     date_field: DateField | None = None
     date_from: date | None = None
     date_to: date | None = None
+    age_from: int | None = Field(default=None, ge=0, le=150)
+    age_to: int | None = Field(default=None, ge=0, le=150)
     is_active: bool | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1, le=200)

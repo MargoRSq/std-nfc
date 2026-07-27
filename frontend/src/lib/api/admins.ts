@@ -1,5 +1,7 @@
 import { apiClient } from "./client";
 
+export type AdminRole = "admin" | "super_admin" | "viewer";
+
 export interface Admin {
   id: string;
   email: string;
@@ -28,14 +30,14 @@ export interface AuditLogEntry {
 export interface InviteRequest {
   email: string;
   name?: string;
-  role: "admin" | "super_admin";
+  role: AdminRole;
   category_ids?: number[];
   can_export?: boolean;
   initial_password?: string;
 }
 
 export interface UpdateAdminRequest {
-  role?: "admin" | "super_admin";
+  role?: AdminRole;
   category_ids?: number[];
 }
 

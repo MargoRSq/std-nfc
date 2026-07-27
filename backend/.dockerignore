@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-tests/
+# tests/ намеренно НЕ исключены: их копирует Dockerfile.ci.
+# В прод-образ они не попадают — прод-Dockerfile копирует только src/ и alembic/.

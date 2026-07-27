@@ -110,6 +110,8 @@ const cardSchema = z.object({
   region: z.string().optional(),
   card_issue_date: z.string().optional(),
   join_date: z.string().optional(),
+  exclusion_year: z.string().optional(),
+  death_date: z.string().optional(),
   chairman: z.string().optional(),
   bg_kind: z.enum(["solid", "gradient"]).default("solid"),
   bg_color: z.string().optional(),
@@ -324,6 +326,8 @@ export function CardEditPage({ mode }: CardEditPageProps) {
       region: "",
       card_issue_date: "",
       join_date: "",
+      exclusion_year: "",
+      death_date: "",
       chairman: "",
       bg_kind: "solid",
       bg_color: "#1F1E5E",
@@ -416,6 +420,8 @@ export function CardEditPage({ mode }: CardEditPageProps) {
           region: card.region ?? "",
           card_issue_date: card.card_issue_date ?? "",
           join_date: card.join_date ?? "",
+          exclusion_year: card.exclusion_year ? String(card.exclusion_year) : "",
+          death_date: card.death_date ?? "",
           chairman: card.chairman ?? "",
           bg_kind: (card.bg_kind as "solid" | "gradient") ?? "solid",
           bg_color: card.bg_color ?? "#1F1E5E",
@@ -599,6 +605,8 @@ export function CardEditPage({ mode }: CardEditPageProps) {
       region: data.region || undefined,
       card_issue_date: data.card_issue_date || undefined,
       join_date: data.join_date || undefined,
+      exclusion_year: data.exclusion_year ? Number(data.exclusion_year) : null,
+      death_date: data.death_date || null,
       chairman: data.chairman || undefined,
       bg_kind: data.bg_kind,
       bg_color: data.bg_color || undefined,
@@ -1101,6 +1109,48 @@ export function CardEditPage({ mode }: CardEditPageProps) {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="exclusion_year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-std-muted">
+                          Год исключения из СТД
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value.replace(/\D/g, "").slice(0, 4))
+                            }
+                            inputMode="numeric"
+                            placeholder="Например, 2026"
+                            className="bg-white rounded-xl"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="death_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-std-muted">Дата смерти</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center rounded-xl bg-white px-3 py-2 text-sm">
+                            <DatePickerField
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <ContactBlocksEditor
                     value={internalBlocks}
                     onChange={setInternalBlocks}
@@ -1350,7 +1400,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
                         >
                           {getFieldLabel(
                             "chairman",
-                            "Председатель союза театральных деятелей Российской Федерации",
+                            "Председатель Союза театральных деятелей Российской Федерации",
                           )}
                           <ChevronRight className="h-4 w-4 shrink-0" />
                         </button>

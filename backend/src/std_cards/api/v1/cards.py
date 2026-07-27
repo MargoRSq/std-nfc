@@ -11,9 +11,11 @@ from std_cards.api.deps import (
     AuditRepoDep,
     CardServiceDep,
     SuperAdminDep,
+    ViewerDep,
     get_card_service,
     require_admin,
 )
+from std_cards.core.exceptions import ValidationFailedError
 from std_cards.models.audit import AuditAction
 from std_cards.models.card import CardCreate, CardDB, CardsList, CardsListFilter, CardUpdate
 from std_cards.services.card_service import CardService
@@ -98,17 +100,41 @@ async def preview_card(
 
 @router.get("/export.xlsx")
 async def export_cards_xlsx(
-    user: SuperAdminDep,
+    user: ViewerDep,
     svc: CardServiceDep,
     audit: AuditRepoDep,
+    q: str | None = Query(None),
+    category_id: int | None = Query(None),
+    region: str | None = Query(None),
+    date_field: str | None = Query(None),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    age_from: int | None = Query(None, ge=0, le=150),
+    age_to: int | None = Query(None, ge=0, le=150),
+    is_active: bool | None = Query(None),
 ) -> StreamingResponse:
-    content, row_count = await svc.export_all_xlsx()
+    filter = _build_filter(
+        q=q,
+        category_id=category_id,
+        region=region,
+        date_field=date_field,
+        date_from=date_from,
+        date_to=date_to,
+        age_from=age_from,
+        age_to=age_to,
+        is_active=is_active,
+    )
+    content, row_count = await svc.export_xlsx(filter, current_user=user)
     await audit.write(
         actor_id=user.id,
         actor_email=user.email,
         action=AuditAction.CARD_BULK_EXPORT,
         entity_type="cards",
-        diff={"format": "xlsx", "row_count": row_count},
+        diff={
+            "format": "xlsx",
+            "row_count": row_count,
+            "filter": filter.model_dump(mode="json", exclude_none=True),
+        },
     )
     return StreamingResponse(
         iter([content]),
@@ -134,23 +160,21 @@ async def check_slug(
 _DATE_FIELDS = {"added", "opened", "modified", "created", "issued"}
 
 
-@router.get("/")
-async def list_cards(
-    user: AdminDep,
-    svc: CardServiceDep,
-    q: str | None = Query(None),
-    category_id: int | None = Query(None),
-    region: str | None = Query(None),
-    date_field: str | None = Query(None),
-    date_from: str | None = Query(None),
-    date_to: str | None = Query(None),
-    is_active: bool | None = Query(None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
-    sort: str = Query(default="-created_at"),
-) -> CardsList:
-    from std_cards.core.exceptions import ValidationFailedError
-
+def _build_filter(
+    *,
+    q: str | None,
+    category_id: int | None,
+    region: str | None,
+    date_field: str | None,
+    date_from: str | None,
+    date_to: str | None,
+    age_from: int | None = None,
+    age_to: int | None = None,
+    is_active: bool | None,
+    page: int = 1,
+    page_size: int = 50,
+    sort: str = "-created_at",
+) -> CardsListFilter:
     if date_field is not None and date_field not in _DATE_FIELDS:
         raise ValidationFailedError(
             message=f"Invalid date_field, must be one of: {sorted(_DATE_FIELDS)}"
@@ -160,18 +184,55 @@ async def list_cards(
     parsed_to = date.fromisoformat(date_to) if date_to else None
     if parsed_from is not None and parsed_to is not None and parsed_from > parsed_to:
         raise ValidationFailedError(message="date_from must be on or before date_to")
+    if age_from is not None and age_to is not None and age_from > age_to:
+        raise ValidationFailedError(message="age_from must be less than or equal to age_to")
 
-    filter = CardsListFilter(
+    return CardsListFilter(
         q=q,
         category_id=category_id,
         region=region,
         date_field=date_field,  # type: ignore[arg-type]
         date_from=parsed_from,
         date_to=parsed_to,
+        age_from=age_from,
+        age_to=age_to,
         is_active=is_active,
         page=page,
         page_size=page_size,
         sort=sort,  # type: ignore[arg-type]
+    )
+
+
+@router.get("/")
+async def list_cards(
+    user: ViewerDep,
+    svc: CardServiceDep,
+    q: str | None = Query(None),
+    category_id: int | None = Query(None),
+    region: str | None = Query(None),
+    date_field: str | None = Query(None),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    age_from: int | None = Query(None, ge=0, le=150),
+    age_to: int | None = Query(None, ge=0, le=150),
+    is_active: bool | None = Query(None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+    sort: str = Query(default="-created_at"),
+) -> CardsList:
+    filter = _build_filter(
+        q=q,
+        category_id=category_id,
+        region=region,
+        date_field=date_field,
+        date_from=date_from,
+        date_to=date_to,
+        age_from=age_from,
+        age_to=age_to,
+        is_active=is_active,
+        page=page,
+        page_size=page_size,
+        sort=sort,
     )
     return await svc.list(filter, current_user=user)
 
@@ -179,7 +240,7 @@ async def list_cards(
 @router.get("/{id}")
 async def get_card(
     id: UUID,
-    user: AdminDep,
+    user: ViewerDep,
     svc: CardServiceDep,
 ) -> CardDB:
     return await svc.get(id, current_user=user)

@@ -66,7 +66,7 @@ users = StdCardsTable(
         doc="period index последнего принятого TOTP-кода — replay guard",
     ),
     sa.UniqueConstraint("email", name="uq_users_email"),
-    sa.CheckConstraint("role IN ('super_admin', 'admin')", name="role_value"),
+    sa.CheckConstraint("role IN ('super_admin', 'admin', 'viewer')", name="role_value"),
 )
 
 
@@ -297,6 +297,8 @@ cards = StdCardsTable(
     sa.Column("region", sa.Text(), nullable=True),
     sa.Column("card_issue_date", sa.Date(), nullable=True),
     sa.Column("join_date", sa.Date(), nullable=True),
+    sa.Column("exclusion_year", sa.SmallInteger(), nullable=True, doc="Год исключения из СТД"),
+    sa.Column("death_date", sa.Date(), nullable=True, doc="Дата смерти (только админка)"),
     sa.Column("chairman", sa.Text(), nullable=True),
     sa.Column("photo_key", sa.Text(), nullable=True),
     sa.Column("photo_shape", sa.Text(), nullable=False, server_default=sa.text("'square'")),

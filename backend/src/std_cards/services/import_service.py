@@ -17,7 +17,6 @@ from std_cards.infrastructure.minio import MinioClient
 from std_cards.infrastructure.repositories.card_repo import CardRepository
 from std_cards.infrastructure.repositories.import_job_repo import ImportJobRepository
 from std_cards.infrastructure.repositories.template_repo import TemplateRepository
-from std_cards.logo_presets import default_logo_key
 from std_cards.models.card import BackgroundGradient, CardCreate
 from std_cards.models.import_job import ImportJobDB, ImportStatus
 from std_cards.models.template import TemplateDB
@@ -414,10 +413,10 @@ class ImportService:
             bg_gradient_raw = styles.get("bg_gradient", None)
             photo_shape = styles.get("photo_shape", "square")
             default_chairman = fields.get("chairman", None)
-            # Импорт создаёт карточки через репозиторий, минуя card_service, где
-            # проставляется дефолтный логотип — иначе logo_key остаётся пустым и
-            # карточка не подхватит смену брендового логотипа.
-            logo_key = styles.get("logo_key") or default_logo_key()
+            # logo_key НЕ проставляем дефолтом: пустой ключ рендерит широкую
+            # брендовую плашку СТД, а preset:std — мелкий квадрат 56×56 на белой
+            # подложке. Берём только явный логотип шаблона.
+            logo_key = styles.get("logo_key")
             logo_shape = styles.get("logo_shape") or "square"
         else:
             category_id = 1
@@ -427,7 +426,7 @@ class ImportService:
             bg_gradient_raw = {"from": "#1F1E5E", "to": "#798BFF", "angle": 135}
             photo_shape = "square"
             default_chairman = None
-            logo_key = default_logo_key()
+            logo_key = None
             logo_shape = "square"
 
         bg_gradient = None

@@ -13,12 +13,18 @@ router = APIRouter(tags=["analytics"])
 
 
 def _resolve_range(from_: date | None, to: date | None) -> tuple[datetime, datetime]:
+    """Диапазон дат → границы времени. `to` — включительно.
+
+    Запросы к scan_events фильтруют `ts < to_dt`, поэтому конец диапазона —
+    начало следующего дня. Иначе `to = сегодня` (то, что шлёт фронт) отсекало
+    все сегодняшние сканы, и «Всего сканирований» показывало 0 при живых скан-событиях.
+    """
     if from_ is None:
         from_ = (datetime.now(UTC) - timedelta(days=30)).date()
     if to is None:
-        to = (datetime.now(UTC) + timedelta(days=1)).date()
+        to = datetime.now(UTC).date()
     from_dt = datetime.combine(from_, datetime.min.time(), tzinfo=UTC)
-    to_dt = datetime.combine(to, datetime.min.time(), tzinfo=UTC)
+    to_dt = datetime.combine(to + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
     return from_dt, to_dt
 
 
@@ -29,12 +35,7 @@ async def dashboard(
     from_: date | None = Query(None, alias="from"),
     to: date | None = Query(None),
 ) -> DashboardResponse:
-    if from_ is None:
-        from_ = (datetime.now(UTC) - timedelta(days=30)).date()
-    if to is None:
-        to = (datetime.now(UTC) + timedelta(days=1)).date()
-    from_dt = datetime.combine(from_, datetime.min.time(), tzinfo=UTC)
-    to_dt = datetime.combine(to, datetime.min.time(), tzinfo=UTC)
+    from_dt, to_dt = _resolve_range(from_, to)
     return await service.dashboard(from_dt, to_dt, user=user)
 
 
@@ -46,12 +47,7 @@ async def card_analytics(
     from_: date | None = Query(None, alias="from"),
     to: date | None = Query(None),
 ) -> CardAnalytics:
-    if from_ is None:
-        from_ = (datetime.now(UTC) - timedelta(days=30)).date()
-    if to is None:
-        to = (datetime.now(UTC) + timedelta(days=1)).date()
-    from_dt = datetime.combine(from_, datetime.min.time(), tzinfo=UTC)
-    to_dt = datetime.combine(to, datetime.min.time(), tzinfo=UTC)
+    from_dt, to_dt = _resolve_range(from_, to)
     return await service.card_analytics(card_id, from_dt, to_dt, user=user)
 
 
@@ -64,12 +60,7 @@ async def top_active_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ) -> TopActiveUsersResponse:
-    if from_ is None:
-        from_ = (datetime.now(UTC) - timedelta(days=30)).date()
-    if to is None:
-        to = (datetime.now(UTC) + timedelta(days=1)).date()
-    from_dt = datetime.combine(from_, datetime.min.time(), tzinfo=UTC)
-    to_dt = datetime.combine(to, datetime.min.time(), tzinfo=UTC)
+    from_dt, to_dt = _resolve_range(from_, to)
     return await service.top_active_users(from_dt, to_dt, page=page, page_size=page_size, user=user)
 
 

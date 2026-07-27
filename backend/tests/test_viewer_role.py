@@ -55,7 +55,10 @@ async def test_viewer_sees_all_cards_regardless_of_categories(
     client: AsyncClient, viewer_headers, super_headers
 ):
     for idx, category_id in enumerate((1, 2), start=1):
-        payload = _CARD_PAYLOAD | {"membership_no": f"MBR-VIEW-CAT{idx}", "category_id": category_id}
+        payload = _CARD_PAYLOAD | {
+            "membership_no": f"MBR-VIEW-CAT{idx}",
+            "category_id": category_id,
+        }
         assert (
             await client.post("/api/cards/", json=payload, headers=super_headers)
         ).status_code == 201
@@ -71,9 +74,7 @@ async def test_viewer_can_export(client: AsyncClient, viewer_headers):
 
 async def test_viewer_can_read_analytics_and_categories(client: AsyncClient, viewer_headers):
     assert (await client.get("/api/categories/", headers=viewer_headers)).status_code == 200
-    assert (
-        await client.get("/api/analytics/dashboard", headers=viewer_headers)
-    ).status_code == 200
+    assert (await client.get("/api/analytics/dashboard", headers=viewer_headers)).status_code == 200
 
 
 async def test_viewer_cannot_write(client: AsyncClient, viewer_headers, super_headers):

@@ -34,7 +34,7 @@ def test_coerce_date_treats_placeholders_as_empty(raw):
 
 @pytest.mark.parametrize("raw", ["не дата", "13.13.1987", 12, 99999])
 def test_coerce_date_rejects_garbage(raw):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Дата вступления"):
         coerce_date(raw, field="Дата вступления")
 
 
@@ -59,5 +59,5 @@ def test_coerce_year_treats_placeholders_as_empty():
 
 @pytest.mark.parametrize("raw", ["позапрошлый", 1500, "20261"])
 def test_coerce_year_rejects_garbage(raw):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Год исключения"):
         coerce_year(raw, field="Год исключения")

@@ -74,3 +74,53 @@ async def test_card_analytics_requires_auth(client: AsyncClient):
     card_id = uuid4()
     r = await client.get(f"/api/analytics/cards/{card_id}")
     assert r.status_code == 401
+
+
+def test_resolve_range_includes_whole_to_day():
+    """`to` включительно: репозиторий фильтрует ts < to_dt, поэтому конец — начало
+    следующего дня. Иначе сегодняшние сканы не попадали в дашборд."""
+    from datetime import UTC, date, datetime
+
+    from std_cards.api.v1.analytics import _resolve_range
+
+    from_dt, to_dt = _resolve_range(date(2026, 7, 1), date(2026, 7, 27))
+    assert from_dt == datetime(2026, 7, 1, tzinfo=UTC)
+    assert to_dt == datetime(2026, 7, 28, tzinfo=UTC)
+
+
+async def test_dashboard_counts_scans_of_the_to_day(client: AsyncClient, user_repo, session_maker):
+    """Скан «сегодня» виден при to=сегодня — из-за старой границы диапазона
+    «Всего сканирований» показывало 0 при живых скан-событиях."""
+    from datetime import UTC, datetime
+    from uuid import uuid4
+
+    from std_cards.infrastructure.repositories.card_repo import CardRepository
+    from std_cards.infrastructure.repositories.scan_repo import ScanEventRepository
+    from std_cards.models.card import CardCreate
+
+    # super_admin: у обычного админа ACL режет чужие карточки и скан не попадёт в дашборд
+    pw = "scanSuper#1"
+    user = await user_repo.create(
+        UserCreate(
+            email="scan_super@x.com", password_hash=hash_password(pw), role=UserRole.SUPER_ADMIN
+        )
+    )
+    login = await client.post("/api/auth/login", json={"email": "scan_super@x.com", "password": pw})
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    card = await CardRepository(session_maker).create(
+        CardCreate(
+            last_name="Скан",
+            first_name="Тест",
+            membership_no=f"MBR-{uuid4().hex[:8]}",
+            category_id=1,
+        ),
+        slug=f"sc{uuid4().hex[:6]}",
+        created_by=user.id,
+    )
+    await ScanEventRepository(session_maker).insert_batch(
+        [{"card_id": card.id, "ts": datetime.now(UTC), "is_bot": False}]
+    )
+    today = datetime.now(UTC).date().isoformat()
+    r = await client.get(f"/api/analytics/dashboard?from={today}&to={today}", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["kpi"]["total_scans"] >= 1

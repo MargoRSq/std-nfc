@@ -52,9 +52,10 @@ MAXAUTH=$(echo "$SSHD_CFG" | awk '$1=="maxauthtries"{print $2}')
     || warn "MaxAuthTries=${MAXAUTH:-?} — ожидалось ≤3"
 
 echo "== 2. Файрвол =="
-if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | head -1 | grep -q active; then
+# LC_ALL=C: с русской локалью ufw пишет «Состояние: активен» и проверка не срабатывала
+if command -v ufw >/dev/null 2>&1 && LC_ALL=C ufw status 2>/dev/null | head -1 | grep -q active; then
     ok "ufw активен"
-    UFW_RULES=$(ufw status 2>/dev/null | awk 'NR>3 && $1 ~ /^[0-9]/ {print $1}' | cut -d/ -f1 | sort -u)
+    UFW_RULES=$(LC_ALL=C ufw status 2>/dev/null | awk '$1 ~ /^[0-9]+(\/|$)/ {print $1}' | cut -d/ -f1 | sort -u)
     EXTRA=$(echo "$UFW_RULES" | grep -v -e "^$SSH_PORT$" -e '^22$' -e '^80$' -e '^443$' || true)
     [ -z "$EXTRA" ] && ok "открыты только нужные порты: $(echo "$UFW_RULES" | tr '\n' ' ')" \
         || warn "лишние правила ufw: $(echo "$EXTRA" | tr '\n' ' ')"

@@ -215,13 +215,20 @@ sleep 3
 JAILS=$(fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p')
 echo "  джейлы: ${JAILS:-не запустились, см. journalctl -u fail2ban}"
 
-# fail2ban создаёт цепочку f2b-<джейл>, но переход в неё из DOCKER-USER иногда
-# не появляется — тогда бан числится, а трафик к контейнеру идёт мимо. Ставим сами.
+# Цепочку f2b-<джейл> fail2ban заводит только при первом бане, а переход из
+# DOCKER-USER не ставит вовсе — без него бан числится, но трафик к контейнеру
+# идёт мимо (проверено вживую: забаненный IP получал 200). Форсируем создание
+# холостым баном и вешаем переход сами.
+PROBE_IP=198.51.100.77
 for j in caddy-auth caddy-scan; do
+    fail2ban-client set "$j" banip "$PROBE_IP" >/dev/null 2>&1
+    fail2ban-client set "$j" unbanip "$PROBE_IP" >/dev/null 2>&1
     iptables -n -L "f2b-$j" >/dev/null 2>&1 || continue
     iptables -C DOCKER-USER -p tcp -m multiport --dports 80,443 -j "f2b-$j" 2>/dev/null \
         || iptables -I DOCKER-USER -p tcp -m multiport --dports 80,443 -j "f2b-$j"
 done
+fail2ban-client set recidive banip "$PROBE_IP" >/dev/null 2>&1
+fail2ban-client set recidive unbanip "$PROBE_IP" >/dev/null 2>&1
 if iptables -n -L f2b-recidive >/dev/null 2>&1; then
     iptables -C DOCKER-USER -j f2b-recidive 2>/dev/null \
         || iptables -I DOCKER-USER -j f2b-recidive

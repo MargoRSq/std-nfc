@@ -156,6 +156,10 @@ ignoreregex = ^.*"uri":"/(api|c|assets)/.*$
 EOF
 
 CADDY_LOG="$DIR/logs/caddy/access.log"
+# 80/443 отдаёт контейнер, а его трафик идёт цепочкой forward, а не input.
+# Дефолтный banaction вешает правило в input — бан числится, но не блокирует
+# (проверено вживую: забаненный IP получал 200). Для веб-джейлов баним
+# в DOCKER-USER: эту цепочку Docker пропускает перед своими правилами.
 cat > /etc/fail2ban/jail.d/std-cards.local <<EOF
 [DEFAULT]
 bantime  = $BANTIME
@@ -169,25 +173,29 @@ port     = $SSH_PORT,22
 maxretry = 3
 
 [caddy-auth]
-enabled  = true
-filter   = caddy-auth
-logpath  = $CADDY_LOG
-port     = http,https
-maxretry = 5
+enabled   = true
+filter    = caddy-auth
+logpath   = $CADDY_LOG
+port      = http,https
+maxretry  = 5
+banaction = iptables-multiport[chain="DOCKER-USER"]
 
 [caddy-scan]
-enabled  = true
-filter   = caddy-scan
-logpath  = $CADDY_LOG
-port     = http,https
-maxretry = 15
-findtime = 5m
+enabled   = true
+filter    = caddy-scan
+logpath   = $CADDY_LOG
+port      = http,https
+maxretry  = 15
+findtime  = 5m
+banaction = iptables-multiport[chain="DOCKER-USER"]
 
 [recidive]
-enabled  = true
-bantime  = 1w
-findtime = 1d
-maxretry = 3
+enabled   = true
+bantime   = 1w
+findtime  = 1d
+maxretry  = 3
+banaction = iptables-allports[chain="DOCKER-USER"]
+            %(banaction_allports)s
 EOF
 
 touch "$CADDY_LOG"

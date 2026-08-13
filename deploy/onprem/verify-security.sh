@@ -75,6 +75,17 @@ if command -v fail2ban-client >/dev/null 2>&1 && fail2ban-client ping >/dev/null
             fail "джейл $jail не включён"
         fi
     done
+    # Бан должен реально блокировать: 80/443 отдаёт контейнер, его трафик идёт
+    # через forward, а дефолтное правило fail2ban висит в input и ни на что не влияет.
+    TESTIP=198.51.100.77
+    fail2ban-client set caddy-auth banip "$TESTIP" >/dev/null 2>&1
+    sleep 1
+    if iptables -S DOCKER-USER 2>/dev/null | grep -q "$TESTIP"; then
+        ok "бан веб-джейла доезжает до цепочки DOCKER-USER (проверено тестовым IP)"
+    else
+        fail "бан caddy-auth не попадает в DOCKER-USER — блокировки веб-трафика НЕ будет"
+    fi
+    fail2ban-client set caddy-auth unbanip "$TESTIP" >/dev/null 2>&1
 else
     fail "fail2ban не установлен или не запущен"
 fi

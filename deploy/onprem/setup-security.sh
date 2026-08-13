@@ -14,10 +14,20 @@ cd "$DIR"
 [ "$(id -u)" -eq 0 ] || { echo "ERROR: запускать от root" >&2; exit 1; }
 [ -f .env ] || { echo "ERROR: нет .env — запускать из каталога установки" >&2; exit 1; }
 
-DROP_22=no
-[ "${1:-}" = "--drop-22" ] && DROP_22=yes
-
 getenv() { grep "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- ; }
+
+# Решение «22 закрыт» помним в .env: иначе следующий же прогон (в том числе
+# из update.sh) молча вернёт порт 22, и боты набегут обратно.
+DROP_22=no
+[ "$(getenv SSH_DROP_22)" = "yes" ] && DROP_22=yes
+if [ "${1:-}" = "--drop-22" ]; then
+    DROP_22=yes
+    if grep -q '^SSH_DROP_22=' .env; then
+        sed -i 's/^SSH_DROP_22=.*/SSH_DROP_22=yes/' .env
+    else
+        printf '\n# Порт 22 закрыт (setup-security.sh --drop-22)\nSSH_DROP_22=yes\n' >> .env
+    fi
+fi
 
 # Стенды живут на общих хостах: смена порта SSH и ufw там отрежут доступ
 # ко всему остальному, что крутится на машине.
@@ -201,9 +211,22 @@ EOF
 touch "$CADDY_LOG"
 systemctl enable fail2ban >/dev/null 2>&1 || true
 systemctl restart fail2ban
-sleep 2
+sleep 3
 JAILS=$(fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p')
 echo "  джейлы: ${JAILS:-не запустились, см. journalctl -u fail2ban}"
+
+# fail2ban создаёт цепочку f2b-<джейл>, но переход в неё из DOCKER-USER иногда
+# не появляется — тогда бан числится, а трафик к контейнеру идёт мимо. Ставим сами.
+for j in caddy-auth caddy-scan; do
+    iptables -n -L "f2b-$j" >/dev/null 2>&1 || continue
+    iptables -C DOCKER-USER -p tcp -m multiport --dports 80,443 -j "f2b-$j" 2>/dev/null \
+        || iptables -I DOCKER-USER -p tcp -m multiport --dports 80,443 -j "f2b-$j"
+done
+if iptables -n -L f2b-recidive >/dev/null 2>&1; then
+    iptables -C DOCKER-USER -j f2b-recidive 2>/dev/null \
+        || iptables -I DOCKER-USER -j f2b-recidive
+fi
+echo "  переходов в DOCKER-USER: $(iptables -S DOCKER-USER 2>/dev/null | grep -c f2b)"
 
 echo "==> 6/6 Перезапуск Caddy с новой конфигурацией"
 if docker compose ps --services 2>/dev/null | grep -qx caddy; then

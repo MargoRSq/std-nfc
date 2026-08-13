@@ -79,11 +79,16 @@ if command -v fail2ban-client >/dev/null 2>&1 && fail2ban-client ping >/dev/null
     # через forward, а дефолтное правило fail2ban висит в input и ни на что не влияет.
     TESTIP=198.51.100.77
     fail2ban-client set caddy-auth banip "$TESTIP" >/dev/null 2>&1
-    sleep 1
-    if iptables -S DOCKER-USER 2>/dev/null | grep -q "$TESTIP"; then
-        ok "бан веб-джейла доезжает до цепочки DOCKER-USER (проверено тестовым IP)"
+    sleep 2
+    IN_CHAIN=no; JUMP=no
+    iptables -S f2b-caddy-auth 2>/dev/null | grep -q "$TESTIP" && IN_CHAIN=yes
+    iptables -S DOCKER-USER 2>/dev/null | grep -q "f2b-caddy-auth" && JUMP=yes
+    if [ "$IN_CHAIN" = yes ] && [ "$JUMP" = yes ]; then
+        ok "бан веб-джейла реально блокирует: IP в f2b-caddy-auth + переход из DOCKER-USER"
+    elif [ "$IN_CHAIN" = yes ]; then
+        fail "бан висит в f2b-caddy-auth, но перехода из DOCKER-USER нет — трафик к контейнеру не блокируется"
     else
-        fail "бан caddy-auth не попадает в DOCKER-USER — блокировки веб-трафика НЕ будет"
+        fail "бан caddy-auth не создал правило — блокировки веб-трафика НЕ будет"
     fi
     fail2ban-client set caddy-auth unbanip "$TESTIP" >/dev/null 2>&1
 else

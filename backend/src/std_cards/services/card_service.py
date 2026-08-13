@@ -53,13 +53,25 @@ def compute_template_overrides(
     current_avatar_gradient: dict | BackgroundGradient | None = None,
     current_contacts: list | None = None,
     current_label_set: list | None = None,
+    force: bool = False,
 ) -> dict:
+    """Значения шаблона поверх карточки.
+
+    По умолчанию заполняются только пустые поля — так шаблон работает при создании
+    карточки. При `force=True` (ручное «Назначить шаблон») оформление перезаписывается
+    целиком, иначе на заполненной карточке шаблон визуально ничего не менял.
+    Контентные поля (председатель, регион, контакты) не трогаем и при force —
+    это данные члена СТД, а не оформление.
+    """
     styles = template.default_styles or {}
     fields = template.default_fields or {}
     schema = template.custom_field_schema or []
     update: dict = {}
 
-    if current_bg_kind == "solid" and current_bg_color is None and current_bg_gradient is None:
+    bg_is_default = (
+        current_bg_kind == "solid" and current_bg_color is None and current_bg_gradient is None
+    )
+    if force or bg_is_default:
         tpl_bg_kind = styles.get("bg_kind")
         if tpl_bg_kind == "gradient":
             grad = styles.get("bg_gradient") or {}
@@ -70,21 +82,32 @@ def compute_template_overrides(
                 update["bg_gradient"] = BackgroundGradient(
                     **{"from": from_c, "to": to_c, "angle": grad.get("angle", 135)}
                 )
+                if force:
+                    update["bg_color"] = None
         elif tpl_bg_kind == "solid":
             bg_color = styles.get("bg_color")
             if _is_hex6(bg_color):
                 update["bg_kind"] = "solid"
                 update["bg_color"] = bg_color
+                if force:
+                    update["bg_gradient"] = None
 
-    if current_photo_shape == "square" and styles.get("photo_shape") in ("square", "circle"):
+    if (force or current_photo_shape == "square") and styles.get("photo_shape") in (
+        "square",
+        "circle",
+    ):
         update["photo_shape"] = styles["photo_shape"]
 
-    if current_logo_key is None and styles.get("logo_key"):
+    if (force or current_logo_key is None) and styles.get("logo_key"):
         update["logo_key"] = styles["logo_key"]
-    if current_logo_shape is None and styles.get("logo_shape") in ("square", "circle", "rectangle"):
+    if (force or current_logo_shape is None) and styles.get("logo_shape") in (
+        "square",
+        "circle",
+        "rectangle",
+    ):
         update["logo_shape"] = styles["logo_shape"]
 
-    if current_avatar_color is None and current_avatar_gradient is None:
+    if force or (current_avatar_color is None and current_avatar_gradient is None):
         if styles.get("avatar_gradient"):
             grad = styles["avatar_gradient"]
             from_c = grad.get("from") or grad.get("start")
@@ -93,8 +116,12 @@ def compute_template_overrides(
                 update["avatar_gradient"] = BackgroundGradient(
                     **{"from": from_c, "to": to_c, "angle": grad.get("angle", 135)}
                 )
+                if force:
+                    update["avatar_color"] = None
         elif _is_hex6(styles.get("avatar_color")):
             update["avatar_color"] = styles["avatar_color"]
+            if force:
+                update["avatar_gradient"] = None
 
     if not current_chairman and fields.get("chairman"):
         update["chairman"] = fields["chairman"]
@@ -104,7 +131,7 @@ def compute_template_overrides(
     if not current_contacts and isinstance(fields.get("contacts"), list):
         update["contacts"] = fields["contacts"]
 
-    if not current_label_set and isinstance(schema, list) and schema:
+    if (force or not current_label_set) and isinstance(schema, list) and schema:
         update["label_set"] = schema
 
     return update
@@ -234,6 +261,7 @@ class CardService:
             current_contacts=card.contacts,
             current_label_set=card.label_set,
             template=tpl,
+            force=True,
         )
         if tpl.category_id is not None:
             overrides["category_id"] = tpl.category_id

@@ -1,12 +1,7 @@
 import { apiClient } from "./client";
+import type { Category } from "./categories";
 
-export interface Category {
-  id: number;
-  code: string;
-  name_ru: string;
-  order_idx: number;
-  color_hex?: string | null;
-}
+export type { Category };
 
 export interface BackgroundGradient {
   from: string;

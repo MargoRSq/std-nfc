@@ -21,6 +21,7 @@ from std_cards.infrastructure.repositories import (
     LoginChallengeRepository,
     PasswordResetRepository,
     RefreshTokenRepository,
+    RegionContactsRepository,
     TemplateRepository,
     UserRepository,
 )
@@ -275,3 +276,12 @@ def get_label_preset_repo(
 
 
 LabelPresetRepoDep = Annotated[LabelPresetRepository, Depends(get_label_preset_repo)]
+
+
+def get_region_contacts_repo(
+    sm: SessionMaker = Depends(db_session_maker),
+) -> RegionContactsRepository:
+    return RegionContactsRepository(sm)
+
+
+RegionContactsRepoDep = Annotated[RegionContactsRepository, Depends(get_region_contacts_repo)]

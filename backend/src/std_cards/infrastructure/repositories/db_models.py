@@ -26,6 +26,7 @@ __all__ = [
     "scan_events",
     "scan_aggregates_daily",
     "label_presets",
+    "region_contacts",
 ]
 
 
@@ -158,6 +159,7 @@ categories = StdCardsTable(
     sa.Column("name_ru", sa.Text(), nullable=False),
     sa.Column("order_idx", sa.SmallInteger(), nullable=False),
     sa.Column("color_hex", sa.Text(), nullable=True),
+    sa.Column("is_hidden", sa.Boolean(), nullable=False, server_default=sa.false()),
     sa.UniqueConstraint("code", name="uq_categories_code"),
     add_timestamp_indexes=False,
 )
@@ -550,4 +552,15 @@ label_presets = StdCardsTable(
     ),
     sa.UniqueConstraint("admin_id", "name", name="uq_label_presets_admin_name"),
     sa.Index("ix_label_presets_admin_order", "admin_id", "order_idx"),
+)
+
+
+region_contacts = StdCardsTable(
+    "region_contacts",
+    metadata,
+    sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+    sa.Column("region", sa.Text(), nullable=False, doc="Название региона или '*' — дефолт"),
+    sa.Column("contacts", JSONB(), nullable=False, server_default=sa.text("'[]'")),
+    sa.UniqueConstraint("region", name="uq_region_contacts_region"),
+    add_timestamp_indexes=False,
 )

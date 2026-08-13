@@ -11,6 +11,7 @@ from std_cards.api.deps import (
     CardMessageRepoDep,
     CardServiceDep,
     FeedbackRepoDep,
+    RegionContactsRepoDep,
     ScanServiceDep,
     ViewerDep,
 )
@@ -153,6 +154,7 @@ async def public_card(
     card_service: CardServiceDep,
     scan_service: ScanServiceDep,
     message_repo: CardMessageRepoDep,
+    region_contacts_repo: RegionContactsRepoDep,
 ) -> Response:
     ip = _get_ip(request)
 
@@ -198,6 +200,12 @@ async def public_card(
 
     card_dict, bg_for_palette = _safe_bg(card.model_dump())
     palette = contrast_palette(bg_for_palette)
+
+    # Своих контактов нет — показываем контакты региона (для Москвы/МО и дефолта «*»
+    # они засеяны миграцией, остальные регионы заполняет заказчик в админке).
+    if not card_dict.get("contacts"):
+        fallback = await region_contacts_repo.resolve(card.region)
+        card_dict["contacts"] = [b.model_dump() for b in fallback]
 
     latest_msg = await message_repo.get_latest_active_for_card(card.id)
     message = (

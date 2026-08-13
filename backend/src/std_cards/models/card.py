@@ -23,6 +23,15 @@ class CategoryDB(BaseModel):
     name_ru: str
     order_idx: int
     color_hex: str | None
+    is_hidden: bool = False
+    cards_count: int = 0
+    templates_count: int = 0
+
+
+class CategoryUpdate(BaseModel):
+    name_ru: str | None = Field(None, min_length=1, max_length=100)
+    color_hex: str | None = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    is_hidden: bool | None = None
 
 
 class BackgroundSolid(BaseModel):
@@ -78,6 +87,17 @@ class ContactBlock(BaseModel):
     input_type: Literal["text", "number", "date", "url", "phone", "email"] | None = None
 
 
+def drop_blank_contacts(blocks: list[ContactBlock] | None) -> list[ContactBlock] | None:
+    """Выкидывает полностью пустые блоки.
+
+    Иначе такой блок доезжает до публичной карточки и рисуется пилюлей «None»
+    (в card.html подпись берётся из `type | capitalize`).
+    """
+    if blocks is None:
+        return None
+    return [b for b in blocks if b.value.strip() or (b.label or "").strip()]
+
+
 class CardCreate(BaseModel):
     last_name: str = Field(min_length=1, max_length=100)
     first_name: str = Field(min_length=1, max_length=100)
@@ -122,6 +142,11 @@ class CardCreate(BaseModel):
                 "logo_key must be null, 'preset:<id>' for a known preset, or a 'cards/...' S3 key"
             )
         return v
+
+    @field_validator("contacts", "internal_blocks")
+    @classmethod
+    def _drop_blank_blocks(cls, v: list[ContactBlock]) -> list[ContactBlock]:
+        return drop_blank_contacts(v) or []
 
 
 class CardUpdate(BaseModel):
@@ -169,6 +194,11 @@ class CardUpdate(BaseModel):
                 "logo_key must be null, 'preset:<id>' for a known preset, or a 'cards/...' S3 key"
             )
         return v
+
+    @field_validator("contacts", "internal_blocks")
+    @classmethod
+    def _drop_blank_blocks(cls, v: list[ContactBlock] | None) -> list[ContactBlock] | None:
+        return drop_blank_contacts(v)
 
 
 class CardDB(BaseModel):

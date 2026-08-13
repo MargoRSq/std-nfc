@@ -11,6 +11,7 @@ from std_cards.infrastructure.repositories.label_preset_repo import LabelPresetR
 from std_cards.infrastructure.repositories.login_challenge_repo import LoginChallengeRepository
 from std_cards.infrastructure.repositories.password_reset_repo import PasswordResetRepository
 from std_cards.infrastructure.repositories.refresh_token_repo import RefreshTokenRepository
+from std_cards.infrastructure.repositories.region_contacts_repo import RegionContactsRepository
 from std_cards.infrastructure.repositories.template_repo import TemplateRepository
 from std_cards.infrastructure.repositories.user_repo import UserRepository
 
@@ -30,4 +31,5 @@ __all__ = [
     "FeedbackRepository",
     "CardMessageRepository",
     "LabelPresetRepository",
+    "RegionContactsRepository",
 ]

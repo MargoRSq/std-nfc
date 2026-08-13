@@ -399,6 +399,14 @@ export function CardEditPage({ mode }: CardEditPageProps) {
     applyTemplateStyles(tpl);
   }
 
+  function handleTemplateChange(templateId: string) {
+    const tpl = templates?.find((t) => t.id === templateId);
+    if (!tpl) return;
+    form.setValue("template_id", templateId, { shouldDirty: true });
+    if (tpl.category_id) form.setValue("category_id", tpl.category_id, { shouldDirty: true });
+    applyTemplateStyles(tpl);
+  }
+
   useEffect(() => {
     if (mode !== "create" || !initialTemplateId || !templates) return;
     const tpl = templates.find((t) => t.id === initialTemplateId);
@@ -1077,6 +1085,37 @@ export function CardEditPage({ mode }: CardEditPageProps) {
               <section className="bg-std-surface-2 border-[3px] border-std-secondary rounded-3xl px-4 py-3">
                 <h2 className="text-base font-semibold text-std-ink mb-3">Служебная информация</h2>
                 <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="template_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-std-muted">Шаблон</FormLabel>
+                        <Select
+                          key={`tpl-${templates?.length ?? 0}-${field.value || "none"}`}
+                          value={field.value || ""}
+                          onValueChange={handleTemplateChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white rounded-xl">
+                              <SelectValue placeholder="Выберите шаблон" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(templates ?? []).map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-std-muted">
+                          Смена шаблона перекрашивает оформление карточки.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="category_id"

@@ -1,6 +1,6 @@
 import { type ComponentType } from "react";
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
-import { User, LayoutTemplate, Upload } from "lucide-react";
+import { User, LayoutTemplate, Upload, Phone as PhoneIcon } from "lucide-react";
 import {
   PlusIcon,
   GridIcon,
@@ -202,6 +202,12 @@ export function AdminLayout() {
                   <DropdownMenuItem onClick={() => navigate("/admin/import")}>
                     <Upload className="mr-2 h-4 w-4" />
                     Импорт
+                  </DropdownMenuItem>
+                )}
+                {canEdit && (
+                  <DropdownMenuItem onClick={() => navigate("/admin/region-contacts")}>
+                    <PhoneIcon className="mr-2 h-4 w-4" />
+                    Контакты по регионам
                   </DropdownMenuItem>
                 )}
                 {isSuperAdmin && (

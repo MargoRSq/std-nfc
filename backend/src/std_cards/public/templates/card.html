@@ -569,7 +569,7 @@
   </div>
 
   {% if card.feedback_form_enabled %}
-    {% set public_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | list %}
+    {% set public_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | selectattr('value') | list %}
     <div class="modal-overlay">
       <div class="modal">
         <div class="modal-title">{{ t.contact_title }}</div>
@@ -634,28 +634,15 @@
             {% elif ct == 'website' %}
               <a href="{{ c.value if 'http' in c.value else 'https://' ~ c.value }}" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
                 <span class="pill-label">{{ t.label_website }}</span>
-                <span class="pill-value">{{ c.value }}</span>
+                <span class="pill-value">{{ c.label or c.value }}</span>
               </a>
             {% else %}
               <div class="pill">
-                <span class="pill-label">{{ ct | capitalize }}</span>
+                <span class="pill-label">{{ c.label or (ct | capitalize if ct else '') }}</span>
                 <span class="pill-value">{{ c.value }}</span>
               </div>
             {% endif %}
           {% endfor %}
-        {% else %}
-          <a href="mailto:stdrf@stdrf.ru" class="pill" style="text-decoration:none">
-            <span class="pill-label">{{ t.label_email }}</span>
-            <span class="pill-value">stdrf@stdrf.ru</span>
-          </a>
-          <a href="tel:+74956502846" class="pill" style="text-decoration:none">
-            <span class="pill-label">{{ t.label_phone }}</span>
-            <span class="pill-value">+7(495)650-28-46</span>
-          </a>
-          <a href="https://stdrf.ru" class="pill" style="text-decoration:none" target="_blank" rel="noopener">
-            <span class="pill-label">{{ t.label_website }}</span>
-            <span class="pill-value">stdrf.ru</span>
-          </a>
         {% endif %}
         <label for="contact-toggle" class="modal-close" aria-label="{{ t.contact_close }}">×</label>
       </div>

@@ -20,6 +20,7 @@ from std_cards.api.v1.imports import router as imports_router
 from std_cards.api.v1.label_presets import router as label_presets_router
 from std_cards.api.v1.media import router as media_router
 from std_cards.api.v1.public import router as public_router
+from std_cards.api.v1.region_contacts import router as region_contacts_router
 from std_cards.api.v1.templates import router as templates_router
 from std_cards.config import settings
 from std_cards.core.metrics import setup_metrics
@@ -131,6 +132,7 @@ app.include_router(imports_router)
 app.include_router(analytics_router)
 app.include_router(admins_router)
 app.include_router(label_presets_router)
+app.include_router(region_contacts_router)
 app.include_router(media_router)
 
 setup_metrics(app)

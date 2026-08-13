@@ -23,6 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cardsApi, type CardListItem, type CardsFilterParams, type Category } from "@/lib/api/cards";
+import { usableCategories } from "@/lib/api/categories";
 import { templatesApi, type Template } from "@/lib/api/templates";
 import { importsApi } from "@/lib/api/imports";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -240,6 +241,8 @@ export function CardsListPage() {
   });
 
   const categoryMap = categories ? buildCategoryMap(categories) : new Map<number, Category>();
+  // Категория без карточек и шаблонов в фильтре только путает («что за бронзовые?»).
+  const filterCategories = usableCategories(categories, categoryIdFilter);
 
   const filterParams: CardsFilterParams = {
     q: debouncedSearch || undefined,
@@ -635,7 +638,7 @@ export function CardsListPage() {
           />
         </div>
 
-        {categories && categories.length > 0 && (
+        {filterCategories.length > 0 && (
           <Select
             value={categoryIdFilter != null ? String(categoryIdFilter) : "all"}
             onValueChange={setCategoryFilter}
@@ -645,7 +648,7 @@ export function CardsListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все категории</SelectItem>
-              {categories.map((cat) => (
+              {filterCategories.map((cat) => (
                 <SelectItem key={cat.id} value={String(cat.id)}>
                   {cat.name_ru}
                 </SelectItem>

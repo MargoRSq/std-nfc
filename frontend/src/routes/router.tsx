@@ -31,6 +31,9 @@ const TemplateEditPage = lazy(() =>
 const ImportPage = lazy(() =>
   import("@/pages/admin/ImportPage").then((m) => ({ default: m.ImportPage })),
 );
+const RegionContactsPage = lazy(() =>
+  import("@/pages/admin/RegionContactsPage").then((m) => ({ default: m.RegionContactsPage })),
+);
 const AnalyticsPage = lazy(() =>
   import("@/pages/admin/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage })),
 );
@@ -102,6 +105,7 @@ export const router = createBrowserRouter([
             path: "/admin/import",
             element: <RequireEditor>{lazyRoute(<ImportPage />)}</RequireEditor>,
           },
+          { path: "/admin/region-contacts", element: lazyRoute(<RegionContactsPage />) },
           { path: "/admin/analytics", element: lazyRoute(<AnalyticsPage />) },
           { path: "/admin/account", element: lazyRoute(<AccountPage />) },
           { path: "/admin/2fa-setup", element: <TwoFactorSetupPage /> },

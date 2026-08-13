@@ -62,7 +62,9 @@ export function AssignTemplateDialog({ open, cardId, onClose }: Props) {
         <DialogHeader>
           <DialogTitle>Назначить шаблон</DialogTitle>
           <DialogDescription>
-            Будут заполнены только пустые поля; уже заполненные значения сохранятся.
+            Оформление карточки (фон, форма фото, логотип, аватар, категория) будет заменено
+            на шаблонное. Данные члена СТД — ФИО, номер билета, даты, фото, контакты —
+            останутся как есть.
           </DialogDescription>
         </DialogHeader>
 

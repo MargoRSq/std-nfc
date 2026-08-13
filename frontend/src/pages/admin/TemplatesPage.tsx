@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CategoriesSection } from "@/components/templates/CategoriesSection";
 import { templatesApi, type TemplateDeleteCascade } from "@/lib/api/templates";
 import { cardsApi } from "@/lib/api/cards";
 import { importsApi } from "@/lib/api/imports";
@@ -400,6 +401,8 @@ export function TemplatesPage() {
           </div>
         </>
       )}
+
+      <CategoriesSection />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

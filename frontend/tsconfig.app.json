@@ -22,5 +22,8 @@
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] }
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Тесты в прод-сборку не входят: в бандл заказчика src/test/ (setup jest-dom)
+  // не уезжает, и tsc падал на матчерах вида toBeInTheDocument.
+  "exclude": ["src/test", "src/**/__tests__"]
 }

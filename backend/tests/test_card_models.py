@@ -64,3 +64,28 @@ def test_card_update_explicit_null_logo_key_is_included() -> None:
     model = CardUpdate(logo_key=None)
     dumped = model.model_dump(exclude_unset=True)
     assert dumped == {"logo_key": None}
+
+
+def test_blank_contact_blocks_are_dropped() -> None:
+    """Пустой блок доезжал до публичной карточки пилюлей «None»."""
+    model = CardUpdate(
+        contacts=[
+            {"type": None, "value": ""},
+            {"type": "phone", "value": "+7 495 650-28-46"},
+            {"type": None, "value": "   "},
+        ]
+    )
+    assert model.contacts is not None
+    assert [c.value for c in model.contacts] == ["+7 495 650-28-46"]
+
+
+def test_labelled_block_without_value_is_kept() -> None:
+    """Служебный блок с названием, но пока без значения, терять нельзя."""
+    model = CardUpdate(internal_blocks=[{"type": None, "value": "", "label": "Паспорт"}])
+    assert model.internal_blocks is not None
+    assert len(model.internal_blocks) == 1
+
+
+def test_card_create_drops_blank_contacts() -> None:
+    model = CardCreate(**_create_kwargs(contacts=[{"type": None, "value": ""}]))
+    assert model.contacts == []

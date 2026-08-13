@@ -6,7 +6,7 @@ ARG MAXMIND_LICENSE_KEY=""
 
 # ForceIPv4: на сервере заказчика IPv6 не работает, а DNS отдаёт AAAA —
 # apt уходит в v6 и падает с «Unable to connect to deb.debian.org».
-RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 \
+RUN printf 'Acquire::ForceIPv4 "true";\nAcquire::Retries "5";\nAcquire::http::Timeout "30";\n' > /etc/apt/apt.conf.d/99std-cards \
     && apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 \
+RUN printf 'Acquire::ForceIPv4 "true";\nAcquire::Retries "5";\nAcquire::http::Timeout "30";\n' > /etc/apt/apt.conf.d/99std-cards \
     && apt-get update && apt-get install -y --no-install-recommends libpq-dev curl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -u 1000 app

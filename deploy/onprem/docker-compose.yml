@@ -149,7 +149,9 @@ services:
         condition: service_started
 
   caddy:
-    image: caddy:2-alpine
+    image: ${CADDY_IMAGE:-std-cards-caddy:prod}
+    build:
+      context: ./caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -159,6 +161,7 @@ services:
       ACME_EMAIL: ${ACME_EMAIL:?}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./logs/caddy:/var/log/caddy
       - caddy-data:/data
       - caddy-config:/config
     depends_on:

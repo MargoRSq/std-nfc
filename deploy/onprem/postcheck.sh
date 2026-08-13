@@ -51,12 +51,20 @@ esac
 
 echo "== 4. E2E: логин → карточка → публичная страница =="
 SLUG="postcheck-$(date +%s)"
-TOK=$(curl -sk -m 10 --resolve "$DOMAIN:443:$CADDY_IP" -X POST "https://$DOMAIN/api/auth/login" \
+LOGIN_RESP=$(curl -sk -m 10 --resolve "$DOMAIN:443:$CADDY_IP" -w '\n%{http_code}' \
+    -X POST "https://$DOMAIN/api/auth/login" \
     -H 'Content-Type: application/json' \
-    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASS\"}" \
-    | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASS\"}")
+LOGIN_CODE=$(echo "$LOGIN_RESP" | tail -1)
+TOK=$(echo "$LOGIN_RESP" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
 if [ -z "$TOK" ]; then
-    fail "логин супер-админом не прошёл ($ADMIN_EMAIL) — если пароль меняли, проверка E2E пропущена"
+    # 429 — сработал rate limit на /api/auth/login (например, от verify-security.sh),
+    # это не поломка установки: повторить проверку через минуту.
+    if [ "$LOGIN_CODE" = "429" ]; then
+        warn "логин упёрся в rate limit (429) — E2E пропущен, повтори postcheck через минуту"
+    else
+        fail "логин супер-админом не прошёл ($ADMIN_EMAIL, код $LOGIN_CODE) — если пароль меняли, проверка E2E пропущена"
+    fi
 else
     ok "логин супер-админом"
     CARD=$(curl -sk -m 10 --resolve "$DOMAIN:443:$CADDY_IP" -X POST "https://$DOMAIN/api/cards/" \
@@ -115,6 +123,17 @@ if [ -x ./verify-backup.sh ]; then
         || { fail "бэкап не восстанавливается"; echo "$VERIFY_OUT" | sed 's/^/      /' | head -6; }
 else
     warn "verify-backup.sh не найден — восстановимость не проверена"
+fi
+
+echo "== 7. Защита сервера =="
+if [ -x ./verify-security.sh ]; then
+    SEC_OUT=$(./verify-security.sh 2>&1)
+    SEC_RC=$?
+    SEC_SUM=$(echo "$SEC_OUT" | sed -n 's/^Итог: //p')
+    [ "$SEC_RC" -eq 0 ] && ok "verify-security.sh: ${SEC_SUM:-без замечаний}" \
+        || { fail "verify-security.sh: ${SEC_SUM:-есть проблемы}"; echo "$SEC_OUT" | grep '\[FAIL\]' | sed 's/^/    /'; }
+else
+    warn "verify-security.sh не найден — защита сервера не проверена"
 fi
 
 echo ""

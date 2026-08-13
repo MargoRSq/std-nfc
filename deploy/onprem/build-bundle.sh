@@ -12,9 +12,10 @@ PLATFORM=linux/amd64
 echo "==> Сборка образов ($PLATFORM)"
 docker build --platform "$PLATFORM" -t std-cards-api:prod "$PROJECT/backend"
 docker build --platform "$PLATFORM" -t std-cards-frontend:prod "$PROJECT/frontend"
+docker build --platform "$PLATFORM" -t std-cards-caddy:prod "$DIR/caddy"
 
 echo "==> Pull инфраструктурных образов"
-for img in postgres:16-alpine nats:2.10-alpine minio/minio:latest minio/mc:latest caddy:2-alpine; do
+for img in postgres:16-alpine nats:2.10-alpine minio/minio:latest minio/mc:latest; do
     docker pull --platform "$PLATFORM" "$img"
 done
 
@@ -24,13 +25,20 @@ BUNDLE="$STAGE/std-cards-onprem"
 mkdir -p "$BUNDLE/images"
 docker save -o "$BUNDLE/images/std-cards-api.tar" std-cards-api:prod
 docker save -o "$BUNDLE/images/std-cards-frontend.tar" std-cards-frontend:prod
+docker save -o "$BUNDLE/images/std-cards-caddy.tar" std-cards-caddy:prod
 docker save -o "$BUNDLE/images/infra.tar" \
-    postgres:16-alpine nats:2.10-alpine minio/minio:latest minio/mc:latest caddy:2-alpine
+    postgres:16-alpine nats:2.10-alpine minio/minio:latest minio/mc:latest
 
 echo "==> Файлы бандла"
-cp "$DIR/docker-compose.yml" "$DIR/Caddyfile" "$DIR/.env.example" \
-   "$DIR/install.sh" "$DIR/preflight.sh" "$DIR/postcheck.sh" "$DIR/README.md" "$BUNDLE/"
-chmod +x "$BUNDLE/install.sh" "$BUNDLE/preflight.sh" "$BUNDLE/postcheck.sh"
+cp "$DIR/docker-compose.yml" "$DIR/Caddyfile" "$DIR/.env.example" "$DIR/README.md" "$BUNDLE/"
+# install.sh зовёт setup-*.sh и postcheck.sh — без них offline-установка падает на середине
+for s in install.sh update.sh preflight.sh postcheck.sh verify-backup.sh verify-security.sh \
+         setup-cron.sh setup-autostart.sh setup-backup-disk.sh setup-security.sh; do
+    cp "$DIR/$s" "$BUNDLE/"
+    chmod +x "$BUNDLE/$s"
+done
+mkdir -p "$BUNDLE/caddy"
+cp "$DIR/caddy/Dockerfile" "$BUNDLE/caddy/"
 
 mkdir -p "$DIR/dist"
 OUT="$DIR/dist/std-cards-onprem-$(date +%Y%m%d).tar.gz"

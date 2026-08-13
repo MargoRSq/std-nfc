@@ -1,8 +1,70 @@
 {
 	email {$ACME_EMAIL}
+	# rate_limit из кастомной сборки (caddy/Dockerfile), должен отработать до проксирования
+	order rate_limit before reverse_proxy
 }
 
 {$DOMAIN} {
 	encode gzip
+
+	# std-cards security: заголовки, лимиты, блок сканеров, JSON-лог для fail2ban
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 5
+		}
+		format json
+	}
+
+	# Типовые цели ботов-сканеров. 404 вместо 403: не подтверждаем существование.
+	@scanners path /wp-admin* /wp-login.php /wordpress* /.env /.env.* /.git/* /phpmyadmin* /pma/* /vendor/* /xmlrpc.php /.aws/* /server-status /solr/* /cgi-bin/*
+	respond @scanners 404
+
+	@bad_ua header_regexp User-Agent (?i)(sqlmap|nikto|masscan|zgrab|nmap|wpscan)
+	respond @bad_ua 404
+
+	rate_limit {
+		zone login {
+			match {
+				path /api/auth/login /api/auth/2fa* /api/auth/forgot-password /api/auth/reset-password
+			}
+			key {remote_host}
+			events 10
+			window 1m
+		}
+		zone api {
+			match {
+				path /api/*
+			}
+			key {remote_host}
+			events 300
+			window 1m
+		}
+		zone public {
+			match {
+				path /c/*
+			}
+			key {remote_host}
+			events 120
+			window 1m
+		}
+	}
+
+	# Импорт Excel бывает крупным, остальному хватает 12MB (в API лимит фото — 10MB)
+	request_body /api/imports/* {
+		max_size 64MB
+	}
+	request_body {
+		max_size 12MB
+	}
+
 	reverse_proxy frontend:80
 }

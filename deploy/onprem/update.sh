@@ -24,9 +24,11 @@ docker compose run --rm backup
 echo "==> 3/6 Пересборка образов"
 API_IMAGE=$(grep '^API_IMAGE=' .env | cut -d= -f2)
 FRONTEND_IMAGE=$(grep '^FRONTEND_IMAGE=' .env | cut -d= -f2)
+CADDY_IMAGE=$(grep '^CADDY_IMAGE=' .env | cut -d= -f2)
 if [ -d "$REPO_ROOT/backend" ] && [ -d "$REPO_ROOT/frontend" ]; then
     docker build -t "${API_IMAGE:-std-cards-api:prod}" "$REPO_ROOT/backend"
     docker build -t "${FRONTEND_IMAGE:-std-cards-frontend:prod}" "$REPO_ROOT/frontend"
+    docker build -t "${CADDY_IMAGE:-std-cards-caddy:prod}" "$DIR/caddy"
 elif [ -d images ] && ls images/*.tar >/dev/null 2>&1; then
     for t in images/*.tar; do docker load -i "$t"; done
 else
@@ -37,9 +39,10 @@ fi
 echo "==> 4/6 Перезапуск (миграции применятся автоматически)"
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/6 Автозапуск и кроны (идемпотентно)"
+echo "==> 5/6 Автозапуск, кроны и защита сервера (идемпотентно)"
 ./setup-autostart.sh
 ./setup-cron.sh
+./setup-security.sh
 
 echo "==> 6/6 Проверка"
 if [ -x ./postcheck.sh ]; then

@@ -11,7 +11,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-echo "==> 1/7 Docker"
+echo "==> 1/8 Docker"
 if ! command -v docker >/dev/null 2>&1; then
     echo "Docker не найден, ставлю с get.docker.com (нужен интернет)..."
     curl -fsSL https://get.docker.com | sh
@@ -21,7 +21,7 @@ docker compose version >/dev/null 2>&1 || {
     exit 1
 }
 
-echo "==> 2/7 Образы"
+echo "==> 2/8 Образы"
 BACKEND_DIR=$DIR/../../backend
 FRONTEND_DIR=$DIR/../../frontend
 if [ -d images ] && ls images/*.tar >/dev/null 2>&1; then
@@ -33,12 +33,13 @@ elif [ -f "$BACKEND_DIR/Dockerfile" ] && [ -f "$FRONTEND_DIR/Dockerfile" ]; then
     echo "  offline-образов нет — собираю из исходников (нужен интернет)"
     docker build -t std-cards-api:prod "$BACKEND_DIR"
     docker build -t std-cards-frontend:prod "$FRONTEND_DIR"
+    docker build -t std-cards-caddy:prod "$DIR/caddy"
 else
     echo "ERROR: нет ни images/*.tar, ни исходников backend/frontend рядом с бандлом" >&2
     exit 1
 fi
 
-echo "==> 3/7 Конфигурация (.env)"
+echo "==> 3/8 Конфигурация (.env)"
 if [ ! -f .env ]; then
     cp .env.example .env
 fi
@@ -61,17 +62,20 @@ if grep -q '^DOMAIN=cards.example.ru$' .env; then
     exit 1
 fi
 
-echo "==> 4/7 Запуск"
-mkdir -p backups
+echo "==> 4/8 Запуск"
+mkdir -p backups logs/caddy
 docker compose up -d --wait --wait-timeout 300
 
-echo "==> 5/7 Регулярные задачи (кроны)"
+echo "==> 5/8 Регулярные задачи (кроны)"
 ./setup-cron.sh
 
-echo "==> 6/7 Автозапуск при включении сервера"
+echo "==> 6/8 Автозапуск при включении сервера"
 ./setup-autostart.sh
 
-echo "==> 7/7 Проверка"
+echo "==> 7/8 Защита сервера (SSH, файрвол, fail2ban)"
+./setup-security.sh
+
+echo "==> 8/8 Проверка"
 docker compose ps
 docker compose exec -T api curl -fsS http://localhost:8000/healthz && echo " — api OK"
 docker compose exec -T api curl -fsS http://localhost:8000/readyz && echo " — api ready"

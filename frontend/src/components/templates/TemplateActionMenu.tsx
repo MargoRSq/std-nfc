@@ -174,7 +174,8 @@ export function TemplateActionMenu({ template, defaultCategoryId, triggerClassNa
             <DialogTitle>Переименовать шаблон</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground -mt-2">
-            Здесь вы можете изменить название шаблона
+            Здесь вы можете изменить название шаблона. Если шаблон в своей категории
+            единственный, категория переименуется вместе с ним.
           </p>
           <Input
             autoFocus

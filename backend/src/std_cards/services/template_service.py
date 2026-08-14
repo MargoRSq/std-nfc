@@ -5,6 +5,7 @@ from std_cards.core.exceptions import ConflictError, NotFoundError, ValidationFa
 from std_cards.infrastructure.repositories.card_repo import CardRepository
 from std_cards.infrastructure.repositories.category_repo import CategoryRepository
 from std_cards.infrastructure.repositories.template_repo import TemplateRepository
+from std_cards.models.card import CategoryUpdate
 from std_cards.models.template import TemplateCreate, TemplateDB, TemplateUpdate
 
 DeleteCascade = Literal["template_only", "with_cards"]
@@ -58,7 +59,23 @@ class TemplateService:
             raise
         if updated is None:
             raise NotFoundError()
+        await self._sync_category_name(updated)
         return updated
+
+    async def _sync_category_name(self, tpl: TemplateDB) -> None:
+        """Переименование шаблона тянет за собой название его категории.
+
+        Заказчик воспринимает их как одно: завёл шаблон «Умершие», а в колонке
+        и фильтре осталось «Золотые». Синхронизируем только когда шаблон в
+        категории единственный — иначе переименование задело бы чужой шаблон.
+        """
+        siblings = [t for t in await self.templates.list_all() if t.category_id == tpl.category_id]
+        if len(siblings) != 1:
+            return
+        cat = await self.categories.get_by_id(tpl.category_id)
+        if cat is None or cat.name_ru == tpl.name:
+            return
+        await self.categories.update(cat.id, CategoryUpdate(name_ru=tpl.name))
 
     async def delete(self, id: UUID, cascade: DeleteCascade = "template_only") -> dict:
         tpl = await self.templates.get_by_id(id)

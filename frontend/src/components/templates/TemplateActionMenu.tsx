@@ -60,6 +60,10 @@ export function TemplateActionMenu({ template, defaultCategoryId, triggerClassNa
     onSuccess: () => {
       toast.success("Шаблон переименован");
       void qc.invalidateQueries({ queryKey: ["templates"] });
+      // категория переименовывается вместе с шаблоном — иначе в списке и фильтре
+      // останется старое название до перезагрузки страницы
+      void qc.invalidateQueries({ queryKey: ["categories"] });
+      void qc.invalidateQueries({ queryKey: ["cards"] });
       setRenameOpen(false);
     },
     onError: () => toast.error("Ошибка при переименовании"),

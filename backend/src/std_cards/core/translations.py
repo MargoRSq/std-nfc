@@ -10,6 +10,7 @@ TRANSLATIONS: dict[str, str] = {
     "label_card_issue_date": "Дата выдачи билета",
     "label_join_date": "Член СТД",
     "label_chairman": "Председатель Союза театральных деятелей Российской Федерации",
+    "label_exclusion": "Дата исключения",
     "label_email": "Email",
     "label_phone": "Телефон",
     "label_whatsapp": "WhatsApp",

@@ -29,23 +29,29 @@ interface TemplateStyles {
   avatar_gradient?: { from: string; to: string; angle: number };
 }
 
+/** Градиент шаблона исторически лежит в двух форматах: `{from,to}` и легаси `{start,end}`. */
+function readGradient(
+  raw: unknown,
+  fallback?: { from: string; to: string; angle: number },
+): { from: string; to: string; angle: number } | undefined {
+  const g = raw as { from?: string; to?: string; start?: string; end?: string; angle?: number };
+  const from = g?.from ?? g?.start;
+  const to = g?.to ?? g?.end;
+  if (!from || !to) return fallback;
+  return { from, to, angle: g.angle ?? 135 };
+}
+
 function extractStyles(t: Template | undefined): TemplateStyles {
   const s = (t?.default_styles ?? {}) as Record<string, unknown>;
-  const grad = s.bg_gradient as { from?: string; to?: string; angle?: number } | undefined;
-  const avGrad = s.avatar_gradient as { from?: string; to?: string; angle?: number } | undefined;
   return {
     bg_kind: (s.bg_kind as "solid" | "gradient") || "solid",
     bg_color: (s.bg_color as string) || "#1F1E5E",
-    bg_gradient: grad && grad.from && grad.to
-      ? { from: grad.from, to: grad.to, angle: grad.angle ?? 135 }
-      : { from: "#1F1E5E", to: "#798BFF", angle: 135 },
+    bg_gradient: readGradient(s.bg_gradient, { from: "#1F1E5E", to: "#798BFF", angle: 135 }),
     photo_shape: (s.photo_shape as PhotoShape) || "square",
     logo_key: (s.logo_key as string) || null,
     logo_shape: (s.logo_shape as LogoShape) || "square",
     avatar_color: (s.avatar_color as string) || undefined,
-    avatar_gradient: avGrad && avGrad.from && avGrad.to
-      ? { from: avGrad.from, to: avGrad.to, angle: avGrad.angle ?? 135 }
-      : undefined,
+    avatar_gradient: readGradient(s.avatar_gradient),
   };
 }
 

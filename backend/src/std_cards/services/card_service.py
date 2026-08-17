@@ -27,6 +27,7 @@ from std_cards.models.card import (
     CardsList,
     CardsListFilter,
     CardUpdate,
+    RegionOption,
 )
 from std_cards.models.template import TemplateDB
 from std_cards.services.slug_service import SlugService
@@ -277,6 +278,11 @@ class CardService:
         if card is None:
             raise NotFoundError()
         return card
+
+    async def list_regions(self, current_user: UserDB | None = None) -> list[RegionOption]:
+        acl_filter = await self._acl(current_user) if current_user else None
+        rows = await self.cards.distinct_regions(acl_filter=acl_filter)
+        return [RegionOption(region=region, cards_count=count) for region, count in rows]
 
     async def list(self, filter: CardsListFilter, current_user: UserDB | None = None) -> CardsList:
         acl_filter = await self._acl(current_user) if current_user else None

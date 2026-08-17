@@ -405,6 +405,9 @@
 <body>
   <input type="checkbox" id="contact-toggle" class="modal-toggle">
 
+  {% set public_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | selectattr('value') | list %}
+  {% set show_contact_modal = card.feedback_form_enabled or public_contacts %}
+
   {% if show_close %}
     <a href="javascript:history.back()" class="close-back" aria-label="Закрыть">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -514,53 +517,17 @@
             {% endif %}
           {% endfor %}
         {% endif %}
-        {% set visible_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | list %}
-        {% for ib in visible_contacts %}
-          {% if ib.value %}
-            {% if ib.type in msg.MESSENGER_TYPES %}
-              <a class="pill pill-link" href="{{ msg.href(ib.type, ib.value) }}" target="_blank" rel="noopener noreferrer">
-                <span class="msg-ico-wrap">{{ msg.icon(ib.type) }}</span>
-                <span class="pill-content">
-                  <span class="pill-label">{{ msg.label(ib.type) }}:</span>
-                  <span class="pill-value">{{ msg.short(ib.value) }}</span>
-                </span>
-              </a>
-            {% elif ib.type == 'phone' %}
-              <a class="pill pill-link" href="tel:{{ ib.value | replace(' ', '') }}">
-                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                <span class="pill-content">
-                  <span class="pill-label">{{ t.label_phone }}:</span>
-                  <span class="pill-value">{{ ib.value }}</span>
-                </span>
-              </a>
-            {% elif ib.type == 'email' %}
-              <a class="pill pill-link" href="mailto:{{ ib.value }}">
-                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
-                <span class="pill-content">
-                  <span class="pill-label">{{ t.label_email }}:</span>
-                  <span class="pill-value">{{ ib.value }}</span>
-                </span>
-              </a>
-            {% elif ib.type == 'website' %}
-              <a class="pill pill-link" href="{{ ib.value if ib.value.startswith('http') else 'https://' + ib.value }}" target="_blank" rel="noopener noreferrer">
-                <span class="msg-ico-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
-                <span class="pill-content">
-                  <span class="pill-label">{{ t.label_website }}:</span>
-                  <span class="pill-value">{{ ib.value }}</span>
-                </span>
-              </a>
-            {% else %}
-              <div class="pill">
-                <span class="pill-label">
-                  {% if ib.type == 'notes' %}{{ t.label_notes or 'Заметки' }}{% else %}{{ ib.type }}{% endif %}:
-                </span>
-                <span class="pill-value">{{ ib.value }}</span>
-              </div>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
+        {# Строка появляется только у исключённых — у остальных поле пустое. #}
+        {% if card.exclusion_year %}
+          <div class="pill">
+            <span class="pill-label">{{ t.label_exclusion }}:</span>
+            <span class="pill-value">{{ card.exclusion_year }}</span>
+          </div>
+        {% endif %}
 
-        {% if card.feedback_form_enabled %}
+        {# Контакты не дублируем строками на карточке — они внутри модалки «Связаться с нами». #}
+
+        {% if show_contact_modal %}
           <label for="contact-toggle" class="contact-btn">{{ t.contact_btn }}</label>
         {% endif %}
       </div>
@@ -568,8 +535,7 @@
   </div>
   </div>
 
-  {% if card.feedback_form_enabled %}
-    {% set public_contacts = (card.contacts or []) | rejectattr('is_internal') | rejectattr('is_hidden') | selectattr('value') | list %}
+  {% if show_contact_modal %}
     <div class="modal-overlay">
       <div class="modal">
         <div class="modal-title">{{ t.contact_title }}</div>

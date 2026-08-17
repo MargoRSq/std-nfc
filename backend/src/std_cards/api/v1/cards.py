@@ -17,7 +17,14 @@ from std_cards.api.deps import (
 )
 from std_cards.core.exceptions import ValidationFailedError
 from std_cards.models.audit import AuditAction
-from std_cards.models.card import CardCreate, CardDB, CardsList, CardsListFilter, CardUpdate
+from std_cards.models.card import (
+    CardCreate,
+    CardDB,
+    CardsList,
+    CardsListFilter,
+    CardUpdate,
+    RegionOption,
+)
 from std_cards.services.card_service import CardService
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
@@ -144,6 +151,15 @@ async def export_cards_xlsx(
             "Content-Length": str(len(content)),
         },
     )
+
+
+@router.get("/regions")
+async def list_card_regions(
+    user: ViewerDep,
+    svc: CardServiceDep,
+) -> list[RegionOption]:
+    """Регионы, реально встречающиеся в карточках — для фильтра списка."""
+    return await svc.list_regions(current_user=user)
 
 
 @router.get("/check-slug")

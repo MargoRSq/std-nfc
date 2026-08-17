@@ -106,6 +106,11 @@ export function CategoriesSection() {
                   disabled={mutation.isPending}
                   onClick={() => mutation.mutate({ id: cat.id, is_hidden: !cat.is_hidden })}
                   aria-label={cat.is_hidden ? "Показать категорию" : "Скрыть категорию"}
+                  title={
+                    cat.is_hidden
+                      ? "Категория скрыта из фильтра списка карточек. Сами карточки и права доступа не меняются"
+                      : "Скрыть категорию из фильтра списка карточек. Сами карточки и права доступа не меняются"
+                  }
                 >
                   {cat.is_hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </Button>

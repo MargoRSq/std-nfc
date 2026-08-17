@@ -150,6 +150,11 @@ export interface CardsFilterParams {
   age_to?: number;
 }
 
+export interface RegionOption {
+  region: string;
+  cards_count: number;
+}
+
 export interface CardsListParams extends CardsFilterParams {
   page?: number;
   page_size?: number;
@@ -159,6 +164,7 @@ export interface CardsListParams extends CardsFilterParams {
 export const cardsApi = {
   list: (params: CardsListParams = {}) =>
     apiClient.get<CardsListResponse>("/cards/", { params }),
+  regions: () => apiClient.get<RegionOption[]>("/cards/regions"),
   get: (id: string) => apiClient.get<Card>(`/cards/${id}`),
   create: (data: CardCreateRequest) => apiClient.post<Card>("/cards/", data),
   preview: (data: CardCreateRequest) =>

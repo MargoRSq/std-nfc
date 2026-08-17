@@ -1,4 +1,4 @@
-import { Trash2, LockOpen, EyeOff } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function RowActions({
   onDelete,
   onToggleCollapse,
   onToggleHidden,
+  collapsed,
   hidden,
   canDelete = true,
   className,
@@ -41,9 +42,14 @@ export function RowActions({
           size="sm"
           onClick={onToggleCollapse}
           className="flex-1 h-9 px-3 rounded-lg border-std-border bg-white text-std-primary hover:bg-std-primary/5 text-xs font-normal"
+          title={collapsed ? "Развернуть поле" : "Свернуть поле"}
         >
-          <LockOpen className="h-3.5 w-3.5 mr-1.5" />
-          Открыть
+          {collapsed ? (
+            <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
+          ) : (
+            <ChevronUp className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          {collapsed ? "Открыть" : "Свернуть"}
         </Button>
       )}
       {onToggleHidden && (
@@ -53,10 +59,18 @@ export function RowActions({
           size="sm"
           onClick={onToggleHidden}
           className="flex-1 h-9 px-3 rounded-lg border-std-border bg-white text-std-primary hover:bg-std-primary/5 text-xs font-normal"
-          title={hidden ? "Сейчас скрыто на публичной карточке" : "Видно на публичной карточке"}
+          title={
+            hidden
+              ? "Сейчас скрыто на публичной карточке — вернуть"
+              : "Видно на публичной карточке — скрыть"
+          }
         >
-          <EyeOff className="h-3.5 w-3.5 mr-1.5" />
-          Скрыть
+          {hidden ? (
+            <Eye className="h-3.5 w-3.5 mr-1.5" />
+          ) : (
+            <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          {hidden ? "Показать" : "Скрыть"}
         </Button>
       )}
     </div>

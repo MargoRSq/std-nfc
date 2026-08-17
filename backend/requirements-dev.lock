@@ -12,9 +12,9 @@
 -e file:.
 aiosmtplib==5.1.2
     # via std-cards
-alembic==1.18.5
+alembic==1.19.1
     # via std-cards
-annotated-doc==0.0.4
+annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0
     # via pydantic
@@ -26,22 +26,22 @@ asyncpg==0.31.0
     # via std-cards
 bcrypt==5.0.0
     # via std-cards
-boto3==1.43.56
+boto3==1.43.72
     # via std-cards
-botocore==1.43.56
+botocore==1.43.72
     # via boto3
     # via s3transfer
 certifi==2026.7.22
     # via httpcore
     # via httpx
     # via sentry-sdk
-cffi==2.1.0
+cffi==2.1.1
     # via cryptography
 click==8.4.2
     # via uvicorn
-coverage==7.15.2
+coverage==7.15.4
     # via pytest-cov
-cryptography==49.0.0
+cryptography==50.0.0
     # via pyjwt
 dnspython==2.8.0
     # via email-validator
@@ -50,10 +50,11 @@ email-validator==2.3.0
 et-xmlfile==2.0.0
     # via openpyxl
 faker==40.36.0
-fastapi==0.140.0
+fastapi==0.141.1
     # via sentry-sdk
     # via std-cards
-greenlet==3.5.4
+greenlet==3.5.5
+    # via sqlalchemy
     # via std-cards
 h11==0.16.0
     # via httpcore
@@ -77,7 +78,7 @@ jmespath==1.1.0
     # via botocore
 loguru==0.7.3
     # via std-cards
-mako==1.3.12
+mako==1.4.1
     # via alembic
 markupsafe==3.0.3
     # via jinja2
@@ -88,9 +89,9 @@ nats-py==2.15.0
     # via std-cards
 openpyxl==3.1.5
     # via std-cards
-orjson==3.11.9
+orjson==3.12.0
     # via std-cards
-packaging==26.2
+packaging==26.3
     # via pytest
 pillow==12.3.0
     # via qrcode
@@ -112,15 +113,15 @@ pydantic==2.13.4
     # via std-cards
 pydantic-core==2.46.4
     # via pydantic
-pydantic-settings==2.14.2
+pydantic-settings==2.15.0
     # via std-cards
-pygments==2.20.0
+pygments==2.21.0
     # via pytest
 pyjwt==2.13.0
     # via std-cards
 pyotp==2.10.0
     # via std-cards
-pyrefly==1.1.1
+pyrefly==1.2.0
 pytest==9.1.1
     # via pytest-asyncio
     # via pytest-cov
@@ -128,7 +129,7 @@ pytest-asyncio==1.4.0
 pytest-cov==7.1.0
 python-dateutil==2.9.0.post0
     # via botocore
-python-dotenv==1.2.2
+python-dotenv==1.2.3
     # via pydantic-settings
     # via uvicorn
 python-multipart==0.0.32
@@ -137,17 +138,17 @@ pyyaml==6.0.3
     # via uvicorn
 qrcode==8.2
     # via std-cards
-ruff==0.16.0
+ruff==0.16.3
 s3transfer==0.19.2
     # via boto3
-sentry-sdk==2.66.1
+sentry-sdk==2.68.0
     # via std-cards
 six==1.17.0
     # via python-dateutil
-sqlalchemy==2.0.51
+sqlalchemy==2.0.52
     # via alembic
     # via std-cards
-starlette==1.3.1
+starlette==1.6.0
     # via fastapi
 typing-extensions==4.16.0
     # via alembic
@@ -156,7 +157,7 @@ typing-extensions==4.16.0
     # via pydantic-core
     # via sqlalchemy
     # via typing-inspection
-typing-inspection==0.4.2
+typing-inspection==0.4.4
     # via fastapi
     # via pydantic
     # via pydantic-settings
@@ -167,11 +168,11 @@ ua-parser-builtins==202606
 urllib3==2.7.0
     # via botocore
     # via sentry-sdk
-uvicorn==0.51.0
+uvicorn==0.52.3
     # via std-cards
 uvloop==0.22.1
     # via uvicorn
 watchfiles==1.2.0
     # via uvicorn
-websockets==16.1.1
+websockets==17.0.1
     # via uvicorn

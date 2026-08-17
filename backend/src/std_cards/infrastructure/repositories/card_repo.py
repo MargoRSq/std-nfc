@@ -61,6 +61,30 @@ def _shift_years(d: date, years: int) -> date:
         return d.replace(year=d.year - years, day=28)
 
 
+def normalize_gradient(value):
+    """Приводит градиент к ключам `from`/`to` — их читают card.html и превью.
+
+    `model_dump(mode="python")` разворачивает вложенный BackgroundGradient по
+    именам полей (`from_color`/`to_color`), а не по алиасам, и в БД уезжал
+    формат, которого рендер не понимает: карточка после «Назначить шаблон»
+    рисовалась дефолтным градиентом вместо цветов шаблона. Легаси `start`/`end`
+    из ранних версий приводим сюда же.
+    """
+    if not isinstance(value, dict):
+        return value
+    out = dict(value)
+    for canonical, legacy in (("from", ("from_color", "start")), ("to", ("to_color", "end"))):
+        if canonical in out:
+            continue
+        for key in legacy:
+            if key in out:
+                out[canonical] = out.pop(key)
+                break
+    for key in ("from_color", "to_color", "start", "end"):
+        out.pop(key, None)
+    return out
+
+
 def build_card_filters(filter: CardsListFilter, acl_filter=None) -> list:
     """Условия WHERE, общие для списка карточек и выгрузки в Excel."""
     where = [cards.c.deleted_at.is_(None)]
@@ -111,10 +135,9 @@ class CardRepository(BaseRepository):
                 item.model_dump() if hasattr(item, "model_dump") else item
                 for item in values["contacts"]
             ]
-        if values.get("bg_gradient") and hasattr(values["bg_gradient"], "model_dump"):
-            values["bg_gradient"] = values["bg_gradient"].model_dump(by_alias=True)
-        if values.get("avatar_gradient") and hasattr(values["avatar_gradient"], "model_dump"):
-            values["avatar_gradient"] = values["avatar_gradient"].model_dump(by_alias=True)
+        for key in ("bg_gradient", "avatar_gradient"):
+            if values.get(key):
+                values[key] = normalize_gradient(values[key])
 
         result = await self.ctx_wrap(
             sa.insert(cards).values(**values).returning(cards),
@@ -155,6 +178,28 @@ class CardRepository(BaseRepository):
         result = await self.ctx_wrap(q, conn)
         row = result.fetchone()
         return CardDB.model_validate(row, from_attributes=True) if row else None
+
+    async def distinct_regions(
+        self,
+        *,
+        acl_filter=None,
+        conn: AsyncConnection | None = None,
+    ) -> list[tuple[str, int]]:
+        where = [
+            cards.c.deleted_at.is_(None),
+            cards.c.region.isnot(None),
+            cards.c.region != "",
+        ]
+        if acl_filter is not None:
+            where.append(acl_filter)
+        q = (
+            sa.select(cards.c.region, sa.func.count())
+            .where(sa.and_(*where))
+            .group_by(cards.c.region)
+            .order_by(sa.func.lower(cards.c.region))
+        )
+        result = await self.ctx_wrap(q, conn)
+        return [(row[0], row[1]) for row in result.fetchall()]
 
     async def list(
         self,
@@ -206,18 +251,9 @@ class CardRepository(BaseRepository):
                 item.model_dump() if hasattr(item, "model_dump") else item
                 for item in values["contacts"]
             ]
-        if (
-            "bg_gradient" in values
-            and values["bg_gradient"] is not None
-            and hasattr(values["bg_gradient"], "model_dump")
-        ):
-            values["bg_gradient"] = values["bg_gradient"].model_dump(by_alias=True)
-        if (
-            "avatar_gradient" in values
-            and values["avatar_gradient"] is not None
-            and hasattr(values["avatar_gradient"], "model_dump")
-        ):
-            values["avatar_gradient"] = values["avatar_gradient"].model_dump(by_alias=True)
+        for key in ("bg_gradient", "avatar_gradient"):
+            if values.get(key) is not None:
+                values[key] = normalize_gradient(values[key])
 
         values["updated_at"] = sa.func.now()
         result = await self.ctx_wrap(

@@ -340,7 +340,8 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
     (it) => !(it.kind === "preset" && it.key === "chairman"),
   );
   const showChairman = ordered.includes("chairman") && !!payload.chairman && !payload.hide_chairman;
-  const hasServiceSection = showChairman || visibleContacts.length > 0;
+  // Контакты живут только в модалке «Связаться», строками на карточке их не дублируем.
+  const showContactButton = payload.feedback_form_enabled === true || visibleContacts.length > 0;
 
   const logoShapeCls =
     logoShape === "circle"
@@ -449,31 +450,28 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
             </PillRow>
           );
         })}
+        {/* Строка появляется только у исключённых — у остальных поле пустое. */}
+        {payload.exclusion_year ? (
+          <PillRow>
+            <FieldRow label={t.label_exclusion} value={String(payload.exclusion_year)} />
+          </PillRow>
+        ) : null}
       </div>
 
-      {hasServiceSection && (
+      {showChairman && (
         <div className="flex flex-col gap-[10px] px-4 pt-5 pb-2">
-          {visibleContacts.map((c) =>
-            c.value ? (
-              <PillRow key={`${c.type ?? ""}-${c.value}`}>
-                <ContactItem block={c} />
-              </PillRow>
-            ) : null,
-          )}
-          {showChairman && (
-            <PillRow>
-              <FieldRow
-                label={presetLabel("chairman", t, payload.field_labels)}
-                value={payload.chairman}
-              />
-            </PillRow>
-          )}
+          <PillRow>
+            <FieldRow
+              label={presetLabel("chairman", t, payload.field_labels)}
+              value={payload.chairman}
+            />
+          </PillRow>
         </div>
       )}
 
       <div className="pt-3" />
 
-      {payload.feedback_form_enabled === true ? (
+      {showContactButton ? (
         <div className="px-4 pb-5 pt-2">
           <button
             type="button"

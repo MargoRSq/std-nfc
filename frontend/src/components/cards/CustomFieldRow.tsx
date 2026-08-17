@@ -125,7 +125,7 @@ export function SortableCustomFieldRow({
           </>
         )}
 
-        <div className="rounded-xl bg-white px-4 py-3">
+        <div className={cn("rounded-xl bg-white px-4 py-3", collapsed && "hidden")}>
           {field.type === "date" ? (
             <DatePickerField
               value={field.value}

@@ -183,7 +183,7 @@ function SortableRow({
           </Popover>
         )}
 
-        <div className="relative rounded-xl bg-white px-4 py-3">
+        <div className={cn("relative rounded-xl bg-white px-4 py-3", collapsed && "hidden")}>
           <Input
             value={block.value}
             onChange={(e) =>
@@ -242,7 +242,11 @@ function SortableRow({
           onDelete={onRemove}
           onToggleCollapse={() => setCollapsed((c) => !c)}
           collapsed={collapsed}
-          onToggleHidden={() => onUpdate({ is_hidden: !block.is_hidden })}
+          // Служебные блоки на публичную карточку не попадают в принципе,
+          // поэтому «Скрыть» там нечего — кнопку не показываем.
+          onToggleHidden={
+            forceInternal ? undefined : () => onUpdate({ is_hidden: !block.is_hidden })
+          }
           hidden={block.is_hidden}
         />
       </div>

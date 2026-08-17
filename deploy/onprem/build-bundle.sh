@@ -30,8 +30,7 @@ docker save -o "$BUNDLE/images/infra.tar" \
     postgres:16-alpine nats:2.10-alpine minio/minio:latest minio/mc:latest
 
 echo "==> Файлы бандла"
-cp "$DIR/docker-compose.yml" "$DIR/Caddyfile" "$DIR/.env.example" \
-   "$DIR/README.md" "$DIR/QUICKSTART.md" "$BUNDLE/"
+cp "$DIR/docker-compose.yml" "$DIR/Caddyfile" "$DIR/.env.example" "$DIR/README.md" "$BUNDLE/"
 # install.sh зовёт setup-*.sh и postcheck.sh — без них offline-установка падает на середине
 for s in install.sh update.sh preflight.sh postcheck.sh verify-backup.sh verify-security.sh \
          setup-cron.sh setup-autostart.sh setup-backup-disk.sh setup-security.sh; do

@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CardActionMenu } from "@/components/cards/CardActionMenu";
 import { AssignTemplateDialog } from "@/components/cards/AssignTemplateDialog";
 import { PublishMessageModal } from "@/components/cards/PublishMessageModal";
-import { DateFilterDropdown, type DateFilterValue } from "@/components/cards/DateFilterDropdown";
+import { RegionFilterDropdown } from "@/components/cards/RegionFilterDropdown";
 import { AgeFilterDropdown, type AgeFilterValue } from "@/components/cards/AgeFilterDropdown";
 import { SortDropdown, sortParamFor, orderFromSortParam, type SortOrder } from "@/components/cards/SortDropdown";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -156,22 +156,11 @@ export function CardsListPage() {
   const sortParam = searchParams.get("sort") ?? "-created_at";
   const categoryIdFilter = categoryIdParam ? parseInt(categoryIdParam, 10) : undefined;
 
-  const dateFieldParam = searchParams.get("date_field");
-  const dateFromParam = searchParams.get("date_from") ?? "";
-  const dateToParam = searchParams.get("date_to") ?? "";
+  const regionFilter = searchParams.get("region");
   const ageFromParam = searchParams.get("age_from") ?? "";
   const ageToParam = searchParams.get("age_to") ?? "";
   const ageFilter: AgeFilterValue | null =
     ageFromParam || ageToParam ? { from: ageFromParam, to: ageToParam } : null;
-
-  const dateFilter: DateFilterValue | null =
-    dateFieldParam && (dateFromParam || dateToParam)
-      ? {
-          field: dateFieldParam as DateFilterValue["field"],
-          from: dateFromParam,
-          to: dateToParam,
-        }
-      : null;
 
   function setView(v: ViewMode) {
     setSearchParams((prev) => {
@@ -240,6 +229,12 @@ export function CardsListPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: regionOptions } = useQuery({
+    queryKey: ["card-regions"],
+    queryFn: () => cardsApi.regions().then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const categoryMap = categories ? buildCategoryMap(categories) : new Map<number, Category>();
   // Категория без карточек и шаблонов в фильтре только путает («что за бронзовые?»).
   const filterCategories = usableCategories(categories, categoryIdFilter);
@@ -247,9 +242,7 @@ export function CardsListPage() {
   const filterParams: CardsFilterParams = {
     q: debouncedSearch || undefined,
     category_id: categoryIdFilter,
-    date_field: dateFilter?.field,
-    date_from: dateFilter?.from || undefined,
-    date_to: dateFilter?.to || undefined,
+    region: regionFilter || undefined,
     age_from: ageFilter?.from ? Number(ageFilter.from) : undefined,
     age_to: ageFilter?.to ? Number(ageFilter.to) : undefined,
   };
@@ -261,10 +254,8 @@ export function CardsListPage() {
       page,
       pageSize,
       categoryIdFilter,
+      regionFilter,
       sortParam,
-      dateFilter?.field,
-      dateFilter?.from,
-      dateFilter?.to,
       ageFilter?.from,
       ageFilter?.to,
     ],
@@ -679,22 +670,14 @@ export function CardsListPage() {
           className="rounded-pill"
         />
 
-        <DateFilterDropdown
-          value={dateFilter}
+        <RegionFilterDropdown
+          value={regionFilter}
+          options={regionOptions ?? []}
           onApply={(next) => {
             setSearchParams((prev) => {
               const params = new URLSearchParams(prev);
-              if (next) {
-                params.set("date_field", next.field);
-                if (next.from) params.set("date_from", next.from);
-                else params.delete("date_from");
-                if (next.to) params.set("date_to", next.to);
-                else params.delete("date_to");
-              } else {
-                params.delete("date_field");
-                params.delete("date_from");
-                params.delete("date_to");
-              }
+              if (next) params.set("region", next);
+              else params.delete("region");
               params.set("page", "1");
               return params;
             });

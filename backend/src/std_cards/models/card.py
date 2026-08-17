@@ -309,6 +309,11 @@ class CardsList(BaseModel):
     page_size: int
 
 
+class RegionOption(BaseModel):
+    region: str
+    cards_count: int
+
+
 DateField = Literal["added", "opened", "modified", "created", "issued"]
 
 

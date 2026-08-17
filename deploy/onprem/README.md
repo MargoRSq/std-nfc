@@ -3,6 +3,8 @@
 Полный стек одним скриптом: PostgreSQL 16, NATS JetStream, MinIO, API (FastAPI), worker,
 frontend (nginx SPA), Caddy с автоматическим TLS (Let's Encrypt) и кроны обслуживания.
 
+Только порядок команд и что ожидать — [QUICKSTART.md](QUICKSTART.md).
+
 ## Требования
 
 | Что | Минимум | Рекомендуется |

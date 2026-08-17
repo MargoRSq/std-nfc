@@ -300,6 +300,7 @@ cards = StdCardsTable(
     sa.Column("card_issue_date", sa.Date(), nullable=True),
     sa.Column("join_date", sa.Date(), nullable=True),
     sa.Column("exclusion_year", sa.SmallInteger(), nullable=True, doc="Год исключения из СТД"),
+    sa.Column("exclusion_date", sa.Date(), nullable=True, doc="Дата исключения из СТД"),
     sa.Column("death_date", sa.Date(), nullable=True, doc="Дата смерти (только админка)"),
     sa.Column("chairman", sa.Text(), nullable=True),
     sa.Column("photo_key", sa.Text(), nullable=True),

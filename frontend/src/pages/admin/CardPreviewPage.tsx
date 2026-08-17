@@ -23,6 +23,7 @@ function cardToPayload(card: Card): CardCreateRequest & { photo_key?: string | n
     card_issue_date: card.card_issue_date ?? undefined,
     join_date: card.join_date ?? undefined,
     exclusion_year: card.exclusion_year,
+    exclusion_date: card.exclusion_date,
     chairman: card.chairman ?? undefined,
     photo_shape: card.photo_shape,
     logo_shape: card.logo_shape,
@@ -52,6 +53,7 @@ function InternalInfoPanel({ card, categoryName }: { card: Card; categoryName?: 
   const rows: { label: string; value: string }[] = [
     ...(categoryName ? [{ label: "Категория", value: categoryName }] : []),
     ...(card.exclusion_year ? [{ label: "Год исключения из СТД", value: String(card.exclusion_year) }] : []),
+    ...(card.exclusion_date ? [{ label: "Дата исключения", value: formatDate(card.exclusion_date) }] : []),
     ...(card.death_date ? [{ label: "Дата смерти", value: formatDate(card.death_date) }] : []),
     ...blocks.map((b) => ({
       label: b.label || (b.type ? messengerLabel(b.type) : "Поле"),

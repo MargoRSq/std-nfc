@@ -42,6 +42,7 @@ export interface Card {
   card_issue_date?: string | null;
   join_date?: string | null;
   exclusion_year?: number | null;
+  exclusion_date?: string | null;
   death_date?: string | null;
   chairman?: string | null;
   photo_key?: string | null;
@@ -104,6 +105,7 @@ export interface CardCreateRequest {
   card_issue_date?: string;
   join_date?: string;
   exclusion_year?: number | null;
+  exclusion_date?: string | null;
   death_date?: string | null;
   chairman?: string;
   photo_shape?: "square" | "circle";

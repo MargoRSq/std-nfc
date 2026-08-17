@@ -111,6 +111,7 @@ const cardSchema = z.object({
   card_issue_date: z.string().optional(),
   join_date: z.string().optional(),
   exclusion_year: z.string().optional(),
+  exclusion_date: z.string().optional(),
   death_date: z.string().optional(),
   chairman: z.string().optional(),
   bg_kind: z.enum(["solid", "gradient"]).default("solid"),
@@ -327,6 +328,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
       card_issue_date: "",
       join_date: "",
       exclusion_year: "",
+      exclusion_date: "",
       death_date: "",
       chairman: "",
       bg_kind: "solid",
@@ -429,6 +431,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
           card_issue_date: card.card_issue_date ?? "",
           join_date: card.join_date ?? "",
           exclusion_year: card.exclusion_year ? String(card.exclusion_year) : "",
+          exclusion_date: card.exclusion_date ?? "",
           death_date: card.death_date ?? "",
           chairman: card.chairman ?? "",
           bg_kind: (card.bg_kind as "solid" | "gradient") ?? "solid",
@@ -614,6 +617,7 @@ export function CardEditPage({ mode }: CardEditPageProps) {
       card_issue_date: data.card_issue_date || undefined,
       join_date: data.join_date || undefined,
       exclusion_year: data.exclusion_year ? Number(data.exclusion_year) : null,
+      exclusion_date: data.exclusion_date || null,
       death_date: data.death_date || null,
       chairman: data.chairman || undefined,
       bg_kind: data.bg_kind,
@@ -1167,6 +1171,24 @@ export function CardEditPage({ mode }: CardEditPageProps) {
                             placeholder="Например, 2026"
                             className="bg-white rounded-xl"
                           />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="exclusion_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-std-muted">Дата исключения</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center rounded-xl bg-white px-3 py-2 text-sm">
+                            <DatePickerField
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

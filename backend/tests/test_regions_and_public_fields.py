@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from httpx import AsyncClient
 
@@ -85,6 +87,31 @@ async def test_public_card_shows_exclusion_year_only_when_set(client: AsyncClien
     with_year = await client.get("/c/exclu2")
     assert "Дата исключения" in with_year.text
     assert "2025" in with_year.text
+
+
+async def test_public_card_prefers_exclusion_date_over_year(client: AsyncClient, session_maker):
+    """На билете нужна дата; год остаётся запасным вариантом для старых карточек."""
+    user_repo = UserRepository(session_maker)
+    card_repo = CardRepository(session_maker)
+    admin = await user_repo.create(
+        UserCreate(email="excl2@x.com", password_hash=hash_password("p"), role=UserRole.ADMIN)
+    )
+    await card_repo.create(
+        CardCreate(
+            last_name="Сдатой",
+            first_name="Игорь",
+            membership_no="E-3",
+            category_id=1,
+            exclusion_year=2025,
+            exclusion_date=date(2025, 3, 14),
+        ),
+        slug="exclu3",
+        created_by=admin.id,
+    )
+
+    r = await client.get("/c/exclu3")
+    assert "Дата исключения" in r.text
+    assert "14.03.2025" in r.text
 
 
 async def test_public_card_keeps_contacts_only_in_modal(client: AsyncClient, session_maker):

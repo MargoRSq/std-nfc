@@ -37,6 +37,7 @@ EXPECTED_HEADERS = [
     "death_date",
     "chairman",
     "photo_url",
+    "exclusion_date",
 ]
 REQUIRED_HEADERS = EXPECTED_HEADERS[:4]
 
@@ -53,6 +54,7 @@ RU_HEADERS = [
     "Дата смерти",
     "Председатель",
     "Ссылка на фото",
+    "Дата исключения",
 ]
 
 HEADER_ALIASES: dict[str, set[str]] = {
@@ -76,6 +78,7 @@ HEADER_ALIASES: dict[str, set[str]] = {
     },
     "join_date": {"join_date", "дата вступления", "член стд с"},
     "exclusion_year": {"exclusion_year", "год исключения", "год исключения из стд"},
+    "exclusion_date": {"exclusion_date", "дата исключения", "дата исключения из стд"},
     "death_date": {"death_date", "дата смерти"},
     "chairman": {"chairman", "председатель"},
     "photo_url": {
@@ -383,6 +386,7 @@ class ImportService:
             card_issue_date = cell("card_issue_date")
             join_date = cell("join_date")
             exclusion_year = cell("exclusion_year")
+            exclusion_date = cell("exclusion_date")
             death_date = cell("death_date")
             chairman = cell("chairman")
         else:
@@ -400,6 +404,7 @@ class ImportService:
                 death_date,
                 chairman,
             ) = padded[:11]
+            exclusion_date = None
         if not last_name or not first_name or not membership_no:
             raise ValueError("Missing required fields: last_name/first_name/membership_no")
 
@@ -454,6 +459,7 @@ class ImportService:
             card_issue_date=coerce_date(card_issue_date, field="Дата выдачи билета"),
             join_date=coerce_date(join_date, field="Дата вступления"),
             exclusion_year=coerce_year(exclusion_year, field="Год исключения из СТД"),
+            exclusion_date=coerce_date(exclusion_date, field="Дата исключения"),
             death_date=coerce_date(death_date, field="Дата смерти"),
             chairman=str(chairman).strip()
             if chairman

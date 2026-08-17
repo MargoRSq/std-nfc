@@ -46,6 +46,33 @@ function buildCategoryMap(categories: Category[]): Map<number, Category> {
   return new Map(categories.map((c) => [c.id, c]));
 }
 
+function ageOf(iso?: string | null): number | null {
+  if (!iso) return null;
+  const b = new Date(iso);
+  if (Number.isNaN(b.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const before =
+    now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate());
+  if (before) age -= 1;
+  return age >= 0 && age < 150 ? age : null;
+}
+
+function yearsLabel(age: number): string {
+  const n = age % 100;
+  if (n >= 11 && n <= 14) return "лет";
+  switch (age % 10) {
+    case 1:
+      return "год";
+    case 2:
+    case 3:
+    case 4:
+      return "года";
+    default:
+      return "лет";
+  }
+}
+
 function formatBirthDate(iso?: string | null): string {
   if (!iso) return "—";
   try {
@@ -391,11 +418,19 @@ export function CardsListPage() {
     {
       id: "birth_date",
       header: () => <SortableHeader columnKey="birth_date" label="Дата рождения" />,
-      cell: ({ row }) => (
-        <span className="text-sm text-std-muted-fg">
-          {formatBirthDate((row.original as CardListItem & { birth_date?: string | null }).birth_date)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const raw = (row.original as CardListItem & { birth_date?: string | null }).birth_date;
+        const age = ageOf(raw);
+        return (
+          <span className="text-sm text-std-muted-fg">
+            {formatBirthDate(raw)}
+            {age !== null && (
+              // Возраст рядом с датой: иначе результат фильтра по возрасту нечем проверить.
+              <span className="text-std-muted"> · {age} {yearsLabel(age)}</span>
+            )}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "region",
@@ -648,11 +683,13 @@ export function CardsListPage() {
           </Select>
         )}
 
-        <SortDropdown
-          value={orderFromSortParam(sortParam)}
-          onChange={(order: SortOrder) => setSortFilter(sortParamFor(order))}
-          className="rounded-pill"
-        />
+        {view === "grid" && (
+          <SortDropdown
+            value={orderFromSortParam(sortParam)}
+            onChange={(order: SortOrder) => setSortFilter(sortParamFor(order))}
+            className="rounded-pill"
+          />
+        )}
 
         <AgeFilterDropdown
           value={ageFilter}
@@ -684,6 +721,13 @@ export function CardsListPage() {
           }}
           className="rounded-pill"
         />
+
+        {/* Без счётчика непонятно, сработал ли фильтр — заказчик читал это как «фильтр не работает». */}
+        {data && (
+          <span className="text-sm text-std-muted-fg whitespace-nowrap">
+            Найдено: {data.total}
+          </span>
+        )}
 
         {canEdit && (
           <Button onClick={() => navigate("/admin/cards/new")} className="ml-auto rounded-pill">

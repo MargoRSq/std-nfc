@@ -110,6 +110,7 @@ class CardCreate(BaseModel):
     card_issue_date: date | None = None
     join_date: date | None = None
     exclusion_year: int | None = Field(None, ge=1900, le=2200)
+    exclusion_date: date | None = None
     death_date: date | None = None
     chairman: str | None = None
     photo_shape: Literal["square", "circle"] = "square"
@@ -161,6 +162,7 @@ class CardUpdate(BaseModel):
     card_issue_date: date | None = None
     join_date: date | None = None
     exclusion_year: int | None = Field(None, ge=1900, le=2200)
+    exclusion_date: date | None = None
     death_date: date | None = None
     chairman: str | None = None
     photo_shape: Literal["square", "circle"] | None = None
@@ -217,6 +219,7 @@ class CardDB(BaseModel):
     card_issue_date: date | None
     join_date: date | None
     exclusion_year: int | None = None
+    exclusion_date: date | None = None
     death_date: date | None = None
     chairman: str | None
     photo_key: str | None

@@ -451,9 +451,16 @@ export function MemberCardPreview({ payload, pendingLogoUrl, pendingPhotoUrl }: 
           );
         })}
         {/* Строка появляется только у исключённых — у остальных поле пустое. */}
-        {payload.exclusion_year ? (
+        {payload.exclusion_date || payload.exclusion_year ? (
           <PillRow>
-            <FieldRow label={t.label_exclusion} value={String(payload.exclusion_year)} />
+            <FieldRow
+              label={t.label_exclusion}
+              value={
+                payload.exclusion_date
+                  ? formatDateRu(payload.exclusion_date)
+                  : String(payload.exclusion_year)
+              }
+            />
           </PillRow>
         ) : null}
       </div>

@@ -517,11 +517,15 @@
             {% endif %}
           {% endfor %}
         {% endif %}
-        {# Строка появляется только у исключённых — у остальных поле пустое. #}
-        {% if card.exclusion_year %}
+        {# Строка появляется только у исключённых. Точная дата, если её завели;
+           иначе год — он заполнен у старых карточек и импорта. #}
+        {% if card.exclusion_date or card.exclusion_year %}
           <div class="pill">
             <span class="pill-label">{{ t.label_exclusion }}:</span>
-            <span class="pill-value">{{ card.exclusion_year }}</span>
+            <span class="pill-value">
+              {%- if card.exclusion_date %}{{ card.exclusion_date | formatdate_ru }}
+              {%- else %}{{ card.exclusion_year }}{% endif -%}
+            </span>
           </div>
         {% endif %}
 

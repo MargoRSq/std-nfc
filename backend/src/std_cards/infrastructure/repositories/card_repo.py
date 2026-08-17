@@ -390,6 +390,7 @@ class CardRepository(BaseRepository):
             cards.c.card_issue_date,
             cards.c.join_date,
             cards.c.exclusion_year,
+            cards.c.exclusion_date,
             cards.c.death_date,
             cards.c.chairman,
             cards.c.is_active,
